@@ -1,0 +1,11 @@
+-- AlterTable: limite WIP di uno stato (work in progress).
+--
+-- Quanti task **di uno stesso progetto** possono stare insieme in questo stato
+-- prima che diventi un avviso. NULL = nessun limite, ed è il valore di tutti
+-- gli stati che esistono già: la funzione nasce spenta, e la accende chi
+-- governa quell'area decidendo il numero.
+--
+-- Non è un blocco: superarlo non impedisce di spostare un task. Un limite che
+-- rifiuta il lavoro si aggira mettendo i task altrove, e allora il numero
+-- smette di dire la verità.
+ALTER TABLE "TaskStatus" ADD COLUMN "wipLimit" INTEGER;

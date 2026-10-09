@@ -1,0 +1,1283 @@
+// GENERATO DA scripts/mariadb/genera-schema.ts — non modificare a mano.
+//
+// La fonte di verità è prisma/schema.prisma (SQLite, la produzione di oggi):
+// qui cambiano solo datasource, cartella del client e i tipi delle colonne di
+// testo che su MySQL non stanno in un VARCHAR(191). Rigenerare con:
+//
+//   pnpm --filter @kancrm/server exec tsx scripts/mariadb/genera-schema.ts
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../../src/generated/prisma-mariadb"
+  runtime      = "nodejs"
+  moduleFormat = "esm"
+  engineType   = "client"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL_MARIADB")
+}
+
+model User {
+  id                   String         @id @default(cuid())
+  email                String         @unique
+  name                 String
+  role                 String         @default("MEMBER") // UserRole: ADMIN | MEMBER | PORTAL
+  authProvider         String         @default("LOCAL") // AuthProvider: LOCAL | GOOGLE
+  // Identità presso il provider SSO (il `sub` di Google): lega l'account al
+  // provider anche se l'email cambia. Nullo per gli utenti solo-locali.
+  googleId             String?        @unique
+  // Azienda di appartenenza per gli utenti PORTAL (clienti).
+  companyId            String?
+  company              Company?       @relation("PortalUsers", fields: [companyId], references: [id], onDelete: SetNull)
+  passwordHash         String?
+  // La password in mano all'utente è **provvisoria** (l'ha reimpostata un
+  // amministratore e gliel'ha spedita per email): finché non ne sceglie una
+  // sua, la sessione serve solo a cambiarla (guard in plugins/auth.ts).
+  mustChangePassword   Boolean        @default(false)
+  /// **Il freno sulle password sbagliate.** Ogni tentativo fallito (accesso o
+  /// cambio password) incrementa il contatore; dal terzo in poi l'account si
+  /// chiude per un tempo che raddoppia a ogni errore (30 s, 60 s, 2 min …) fino
+  /// a 100 minuti, e gli amministratori ricevono un avviso. Una password giusta
+  /// azzera tutto; un amministratore può azzerarlo da «Utenti».
+  failedPasswordAttempts Int       @default(0)
+  passwordLockedUntil    DateTime?
+  /// Quando è partito l'avviso agli amministratori per questo episodio: uno solo.
+  lockoutAlertedAt       DateTime?
+  isActive             Boolean        @default(true)
+  /// Ultimo accesso riuscito (autenticazione).
+  lastLoginAt          DateTime?
+  // Privilegi di amministratore a richiesta (stile sudo): fino a quando valgono.
+  // Nullo o passato = l'admin lavora con gli occhi di un utente normale.
+  // Vedi modules/auth/elevation.ts.
+  adminUntil           DateTime?
+  /// Ultima attività: si aggiorna usando l'applicazione, non solo entrando.
+  lastSeenAt           DateTime?
+  // Utente di sistema "Archivio": intesta le ore a timesheet dei collaboratori
+  // eliminati (vedi modules/users/deletion.ts). Non accede, non è modificabile,
+  // non è eliminabile e non compare tra gli assegnatari selezionabili.
+  isSystem             Boolean        @default(false)
+  avatarUrl            String? @db.VarChar(1000)
+  // Preferenze personali (pannello /profilo).
+  nickName             String?
+  accentColor          String? // colore avatar, es. #7c3aed
+  currency             String         @default("EUR") // EUR | USD | GBP | CHF
+  locale               String         @default("auto") // auto | it | en | fr | de | es (lingua UI; auto = browser→inglese). I nuovi utenti nascono "auto" (impostato in fase di creazione), gli storici mantengono il loro valore.
+  theme                String         @default("light") // auto | light | dark | company (tema UI)
+  /// **Le email si raccolgono in un riepilogo** invece di partire una per una.
+  /// Riguarda solo la posta: la campanella resta immediata, ed è lì che si
+  /// guarda mentre si lavora. Spento per tutti finché non lo si chiede.
+  emailDigest          Boolean        @default(false)
+  /// Le email anche di sabato e domenica. Spento di serie: nel weekend le
+  /// email aspettano il lunedì in un riepilogo (richiesta del 06/09/2026);
+  /// la campanella resta immediata.
+  emailWeekend         Boolean        @default(false)
+  // Permesso solo-timesheet: vede i timesheet di tutti (oltre a quelli dei propri
+  // progetti come manager). Indipendente dagli scope dello scadenzario.
+  canViewAllTimesheets Boolean        @default(false)
+  /// Monitor vendite (portale investitori) che vede **tutte** le offerte, non
+  /// solo quelle spuntate come da mostrare (01/10/2026). Lo decide l'admin.
+  salesMonitorAllDeals Boolean        @default(false)
+  // Quando è stata preparata la bacheca personale di benvenuto ("Mia"). Serve a
+  // farlo UNA volta sola: senza questo segno, eliminando tutte le proprie board
+  // la successiva lettura dell'elenco ne ricreava una, e la board sembrava non
+  // eliminabile. Vedi listBoards.
+  boardsInitializedAt  DateTime?
+  projectOrder         String? @db.Text // ordine manuale dei progetti (JSON array di projectId), per-utente
+  columnOrder          String? @db.Text // ordine colonne kanban per-utente (JSON: chiave->array di id)
+  // Amministrativo a cui assegnare il task generato quando un'offerta di questo
+  // commerciale viene vinta. Vuoto = task non assegnato (lo prende chi lo lavora).
+  /// Le letture di allegati che questa persona ha chiesto.
+  dealAnalyses         DealAnalysis[] @relation("DealAnalysisRequester")
+  /**
+   * Ore settimanali da contratto: il **denominatore** dei riepiloghi di
+   * produttività — ore vere contro ore teoriche. Quaranta per difetto, che è il
+   * tempo pieno; un part-time si scrive qui e i conti seguono senza eccezioni
+   * sparse nel codice. **Zero** vale per i collaboratori che dipendenti non
+   * sono: nessun monte ore, quindi nessuna copertura — le ore si vedono, il
+   * confronto non si fa.
+   */
+  weeklyHours          Int            @default(40)
+  /**
+   * Come questa persona è nominata sul calendario delle assenze, oltre al
+   * proprio nome: «Manu», «Franci». Separati da virgole. Nome e cognome sono
+   * riconosciuti da soli, quindi qui si scrivono solo i soprannomi.
+   */
+  calendarAliases      String? @db.Text
+  billingAssigneeId    String?
+  billingAssignee      User?          @relation("BillingAssignee", fields: [billingAssigneeId], references: [id], onDelete: SetNull)
+  billingFor           User[]         @relation("BillingAssignee")
+  // Fasi vinte che assegnano a questo utente il task amministrativo generato.
+  wonDealStages        DealStage[]    @relation("WonTaskAssignee")
+  // Superato da CalendarFeed (un feed per bacheca): resta perché toglierlo
+  // obbligherebbe SQLite a riscrivere l'intera tabella User, e non lo usa nessuno.
+  calendarToken        String?        @unique
+  // Feed iCal sottoscrivibili (uno per bacheca, ognuno col suo token).
+  calendarFeeds        CalendarFeed[]
+  // Il registro delle assenze: le sue righe, e quelle che ha scritto per altri.
+  absences             Absence[]      @relation("AbsenceOf")
+  absencesEntered      Absence[]      @relation("AbsenceAuthor")
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+
+  sessions       Session[]
+  authChallenges AuthChallenge[]
+  groups         GroupMember[]
+  boards         Board[]         @relation("UserBoards")
+
+  createdTasks    Task[]        @relation("TaskCreator")
+  assignedTasks   Task[]        @relation("TaskAssignee")
+  supervisedTasks Task[]        @relation("TaskSupervisor")
+  comments        Comment[]
+  ticketReads     TicketRead[]
+  attachments     Attachment[]
+  activities      ActivityLog[]
+
+  createdTemplates    RecurrenceTemplate[] @relation("TemplateCreator")
+  assignedTemplates   RecurrenceTemplate[] @relation("TemplateAssignee")
+  supervisedTemplates RecurrenceTemplate[] @relation("TemplateSupervisor")
+  crmNotes            CrmNote[]
+
+  projectMemberships      ProjectMember[]
+  /// Progetti su cui può aprire richieste di supporto (clienti del portale e
+  /// interni senza desk: vedi TicketProjectAccess).
+  ticketProjects          TicketProjectAccess[]
+  notifications           Notification[]
+  notificationPreferences NotificationPreference[]
+  timeEntries             TimeEntry[]
+  timesheetPins           TimesheetPin[]
+  timesheetLocks          TimesheetLock[]
+  pushSubscriptions       PushSubscription[]
+  /// Chiavi delle integrazioni emesse da questo amministratore.
+  apiClients              ApiClient[]              @relation("ApiClientsCreated")
+  /// Chiavi del modulo iniettabile emesse da questo amministratore.
+  injectClients           InjectClient[]           @relation("InjectClientsCreated")
+  /// Applicazioni ospiti che aprono richieste a nome di questo utente di servizio.
+  injectServiceFor        InjectClient[]           @relation("InjectServiceUser")
+  /// Figure incollate in una descrizione non ancora salvata.
+  pendingInlineImages     PendingInlineImage[]
+  ticketLocks             TicketLock[]
+}
+
+/// Figura incollata in una descrizione **prima che il record esista** (nuovo
+/// task, nuovo ticket): il browser dà i byte, non un indirizzo, e un indirizzo
+/// serve subito per mostrarla nell'editor.
+///
+/// Il file sta in `<uploads>/_pending/` e appartiene a chi l'ha incollata;
+/// quando il record viene salvato la figura **trasloca** accanto ad esso
+/// (`<uploads>/<taskId>/_inline/`) e questa riga sparisce — da lì in poi vale
+/// la regola di sempre: chi vede il record vede le sue figure. Ciò che resta
+/// qui è una descrizione mai salvata: lo spazza via il cron notturno.
+model PendingInlineImage {
+  /// Identificativo e nome del file insieme (uuid).
+  id           String   @id
+  /// Estensione col punto (".png"): il tipo si serve senza indovinarlo.
+  ext          String
+  uploadedById String
+  uploadedBy   User     @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+
+  @@index([uploadedById])
+  @@index([createdAt])
+}
+
+// Sottoscrizioni Web Push (una per dispositivo/browser).
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String @db.VarChar(512)   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+// Impostazioni applicative chiave/valore (es. coppia di chiavi VAPID).
+model AppSetting {
+  key   String @id
+  value String @db.Text
+}
+
+// Mesi chiusi del timesheet (lock aziendale gestito dall'admin).
+model TimesheetLock {
+  month      String   @id // YYYY-MM
+  lockedAt   DateTime @default(now())
+  lockedById String
+  lockedBy   User     @relation(fields: [lockedById], references: [id])
+}
+
+model Group {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  // Area di lavoro che questo gruppo GOVERNA (ActivityCategory, null = nessuna).
+  // Chi ne è manager legge i task di quell'area — di chiunque siano — e ne
+  // configura stati e tipi. È una cosa diversa dagli scope di visibilità, che
+  // dicono cosa il gruppo può vedere. Vedi modules/visibility/service.ts.
+  managedArea String?
+  createdAt   DateTime @default(now())
+
+  /// **Da dove viene questa riga.** Il `nick` del plugin che l'ha creata
+  /// passando da una porta dell'SDK, e un riferimento suo (`pluginRef`): l'id
+  /// del record dentro il plugin, o una chiave stabile. Nullo per tutto ciò
+  /// che nasce in KeelOps, che è quasi tutto.
+  ///
+  /// Serve alla disinstallazione: un plugin che se ne va deve poter dire cosa
+  /// ha lasciato nel core, e chi disinstalla deve poter scegliere se tenerlo,
+  /// togliergli il marchio o cancellarlo. Senza, l'unica risposta onesta a
+  /// «cosa succede se lo tolgo?» sarebbe «non si sa» (22/09/2026).
+  /// Per un gruppo `pluginRef` è la chiave stabile con cui il plugin lo
+  /// ritrova anche dopo che l'amministratore l'ha rinominato.
+  pluginNick  String?
+  pluginRef   String?
+
+  members            GroupMember[]
+  visibilitySettings VisibilitySetting[]
+
+  @@unique([pluginNick, pluginRef])
+}
+
+// Quali gruppi vedono un modulo (scope: DEALS oggi, ADMIN_TASKS da M5).
+model VisibilitySetting {
+  scope   String // VisibilityScope: ADMIN_TASKS | DEALS | TICKETS | CONTACTS
+  groupId String
+  access  String @default("FULL") // VisibilityAccess: READ | FULL (READ usato dalle offerte)
+  group   Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@id([scope, groupId])
+}
+
+model GroupMember {
+  groupId   String
+  userId    String
+  // Manager del gruppo: legge le attività dei membri in ogni area, gestisce i
+  // membri del proprio gruppo e configura stati e tipi di attività.
+  isManager Boolean @default(false)
+  group     Group   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([groupId, userId])
+}
+
+// Sfide di accesso via email: reset password self-service e codici OTP.
+// Come per Session, l'id è un'IMPRONTA sha256 del segreto (namespaced sul
+// tipo): il database non contiene mai nulla di spendibile. Una sfida vive
+// poco, si consuma al primo uso buono e muore dopo troppi tentativi.
+model AuthChallenge {
+  id        String   @id
+  userId    String
+  type      String // RESET_PASSWORD | EMAIL_OTP (const in modules/auth/challenges.ts)
+  expiresAt DateTime
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+}
+
+model Session {
+  id        String   @id // sha256 del token di sessione
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// Gli stati sono distinti per categoria di attività (ActivityCategory): il flusso
+// di una telefonata commerciale non è quello di una scadenza fiscale né di uno
+// sviluppo. Un task usa gli stati della categoria del proprio tipo di attività;
+// senza tipo usa quelli GENERAL. L'ordine è relativo alla categoria.
+model TaskStatus {
+  id                 String  @id @default(cuid())
+  name               String
+  category           String  @default("GENERAL") // ActivityCategory: ADMIN | SALES | DEV | GENERAL
+  color              String
+  order              Int
+  isClosed           Boolean @default(false)
+  // FALLBACK GLOBALE: stato in cui nasce il task amministrativo generato da
+  // un'offerta vinta (uno solo, tra gli amministrativi). La configurazione
+  // per-fase (DealStage.wonTaskStatusId) ha la precedenza quando presente: questo
+  // flag si usa solo per le fasi vinte senza stato configurato. Candidato alla
+  // deprecazione quando tutte le fasi isWon saranno configurate esplicitamente.
+  // Vedi ensureWonDealTask.
+  isWonTarget        Boolean @default(false)
+  // Stato dei task che hanno un assegnatario (uno per categoria): un task che ne
+  // riceve uno mentre è ancora nel primo stato ci passa automaticamente, così
+  // "Da assegnare" non resta appiccicato a task già assegnati.
+  isAssignedTarget   Boolean @default(false)
+  // Stato chiuso che INTERROMPE la ricorrenza (es. "Annullato"): un'occorrenza
+  // ricorrente che vi entra non avanza alla scadenza successiva e resta lì finché
+  // l'utente non la sposta a mano. Gli altri stati chiusi (es. "Completato")
+  // fanno riciclare il task in avanti. Vedi planRecurrenceAdvance.
+  stopsRecurrence    Boolean @default(false)
+  // Stato che segna un'ATTIVITÀ AMMINISTRATIVA: una tappa del lavoro che per
+  // l'amministrazione è un evento da fatturare (consegna beta, consegna in
+  // produzione, collaudo). Lo configurano i manager della categoria — per gli
+  // stati di sviluppo, i manager del gruppo Sviluppatori. Un task che ci entra
+  // avvisa il supervisore e chi tiene l'amministrazione, e finisce nell'elenco
+  // delle attività da fatturare. Vedi notifyBillingMilestone.
+  isBillingMilestone Boolean @default(false)
+  // Limite WIP (work in progress): quanti task **di uno stesso progetto**
+  // possono stare insieme in questo stato prima che diventi un avviso. NULL =
+  // nessun limite. Non blocca lo spostamento — un limite che rifiuta il lavoro
+  // si aggira mettendo i task altrove, e il numero smette di dire la verità —
+  // ma si vede sulla colonna del kanban (4/3 con il triangolo giallo) e finisce
+  // nel riepilogo della mattina di chi guida il progetto.
+  wipLimit           Int?
+
+  tasks                Task[]
+  // Ricorrenze che usano questo stato come stato iniziale delle occorrenze.
+  recurrenceInitialFor RecurrenceTemplate[] @relation("RecurrenceInitialStatus")
+  // Fasi vinte che generano il task amministrativo in questo stato.
+  wonDealStages        DealStage[]          @relation("WonTaskStatus")
+
+  @@unique([category, name])
+}
+
+// Tipo di attività del task (configurabile), raggruppato per categoria:
+// ADMIN (amministrative), SALES (commerciali), DEV (sviluppo), GENERAL.
+model ActivityType {
+  id        String  @id @default(cuid())
+  name      String  @unique
+  category  String // ActivityCategory
+  color     String
+  order     Int
+  isActive  Boolean @default(true)
+  // I task di questo tipo sono incontri: possono raccogliere note e decisioni
+  // di altri task. Riconoscere una riunione da un flag e non dal nome permette
+  // all'admin di marcarne più di uno (es. "Riunione", "Appuntamento / Meeting").
+  isMeeting Boolean @default(false)
+
+  tasks               Task[]
+  recurrenceTemplates RecurrenceTemplate[]
+}
+
+// Task è l'entità unica (vedi CLAUDE.md e plan/modello-dati.md):
+// kind = ADMIN | PROJECT | DEAL | TICKET | PERSONAL — la fonte tipizzata è
+// `TaskKind` in packages/shared/src/enums.ts. La stessa riga porta i campi di
+// tutti i vestiti (quelli commerciali valgono per DEAL, ticketPriority per
+// TICKET, …): quali campi vivono per quale kind è CODICE:
+// packages/shared/src/task-kind-fields.ts, col test che pretende la copertura
+// esatta delle colonne di questa tabella; la narrazione sta in
+// manual/data-model.html.
+model Task {
+  id             String        @id @default(cuid())
+  kind           String        @default("ADMIN") // TaskKind
+  title          String @db.VarChar(500)
+  description    String? @db.LongText // markdown semplice
+  // Stato: i task normali usano lo stato globale (per categoria); i task di board
+  // (PERSONAL o amministrativi su board) usano boardStatusId. Esattamente uno dei
+  // due è valorizzato (invariante applicativa).
+  statusId       String?
+  status         TaskStatus?   @relation(fields: [statusId], references: [id])
+  boardId        String?
+  board          Board?        @relation(fields: [boardId], references: [id], onDelete: SetNull)
+  boardStatusId  String?
+  boardStatus    BoardStatus?  @relation(fields: [boardStatusId], references: [id], onDelete: SetNull)
+  // Tipo di attività (opzionale): es. "Emissione fattura", "Telefonata", "Fix".
+  activityTypeId String?
+  activityType   ActivityType? @relation(fields: [activityTypeId], references: [id], onDelete: SetNull)
+  creatorId      String
+  creator        User          @relation("TaskCreator", fields: [creatorId], references: [id])
+  assigneeId     String?
+  assignee       User?         @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  supervisorId   String?
+  supervisor     User?         @relation("TaskSupervisor", fields: [supervisorId], references: [id])
+  dueDate        DateTime? // giorno di scadenza, mezzanotte UTC (convenzione date-only)
+  // Orario della scadenza, "HH:MM" in ora italiana. Facoltativo: serve dove conta
+  // (telefonate e appuntamenti sulle offerte). Separato da dueDate perché salvare
+  // un'ora dentro un timestamp UTC sposterebbe il giorno mostrato in Italia.
+  dueTime        String?
+  closedAt       DateTime?
+  // Soft delete: i record eliminati restano nel cestino (purge dopo N giorni).
+  deletedAt      DateTime?
+  archivedAt     DateTime? // task di board archiviato (nascosto dalla board, conservato)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  // Task di progetto (kind = PROJECT, M5): subtask a 1 livello via parentTaskId.
+  projectId    String?
+  project      Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  parentTaskId String?
+  parentTask   Task?    @relation("Subtasks", fields: [parentTaskId], references: [id], onDelete: Cascade)
+  subtasks     Task[]   @relation("Subtasks")
+
+  // Sequenze: catena ordinata di task propedeutici (non bloccante, vedi CLAUDE.md).
+  predecessorId String?
+  predecessor   Task?   @relation("TaskSequence", fields: [predecessorId], references: [id], onDelete: SetNull)
+  successors    Task[]  @relation("TaskSequence")
+
+  /// **Da dove viene questa riga.** Il `nick` del plugin che l'ha creata
+  /// passando da una porta dell'SDK, e un riferimento suo (`pluginRef`): l'id
+  /// del record dentro il plugin, o una chiave stabile. Nullo per tutto ciò
+  /// che nasce in KeelOps, che è quasi tutto.
+  ///
+  /// Serve alla disinstallazione: un plugin che se ne va deve poter dire cosa
+  /// ha lasciato nel core, e chi disinstalla deve poter scegliere se tenerlo,
+  /// togliergli il marchio o cancellarlo. Senza, l'unica risposta onesta a
+  /// «cosa succede se lo tolgo?» sarebbe «non si sa» (22/09/2026).
+  pluginNick           String?
+  pluginRef            String?
+
+  // Occorrenza materializzata da un template ricorrente (M3).
+  recurrenceTemplateId String?
+  recurrenceTemplate   RecurrenceTemplate? @relation(fields: [recurrenceTemplateId], references: [id], onDelete: SetNull)
+  occurrenceDate       DateTime?
+
+  // Campi deal (kind = DEAL, M4).
+  dealStageId       String?
+  dealStage         DealStage? @relation(fields: [dealStageId], references: [id])
+  dealValue         Float?
+  probability       Int? // 0-100
+  expectedCloseDate DateTime?
+  contactId         String?
+  contact           Contact?   @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  companyId         String?
+  company           Company?   @relation(fields: [companyId], references: [id], onDelete: SetNull)
+
+  // Offerta esposta ai finanziatori (ruolo SALES_MONITOR): la spunta la mette il
+  // commerciale, e apre la sola lettura di titolo, cliente, importo, probabilità,
+  // fase, referente, cronologia e allegati. Vale solo sui deal.
+  visibleToSalesMonitors Boolean @default(false)
+
+  // Motivo della perdita (deal in fase isLost, M7+).
+  lostReason String? @db.Text
+
+  // Campi ticket (kind = TICKET): priorità e riferimento esterno (es. n. osTicket).
+  ticketPriority   String? // TicketPriority: LOW | MEDIUM | HIGH
+  ticketRef        String?
+  /// Nato dall'area ticket: provenienza, e finestra di visibilità per il richiedente.
+  createdViaTicket Boolean @default(false)
+
+  // Task ADMIN di fatturazione generato dall'automazione deal→"Da fatturare".
+  // Unico per deal: garantisce l'idempotenza dell'automazione.
+  /// La lettura degli allegati fatta sull'offerta (solo sui kind=DEAL).
+  analysis     DealAnalysis? @relation("DealAnalysisDeal")
+  sourceDealId String?       @unique
+  sourceDeal   Task?         @relation("BillingSource", fields: [sourceDealId], references: [id], onDelete: SetNull)
+  billingTasks Task[]        @relation("BillingSource")
+
+  // Task ADMIN (scadenzario) collegato a un'offerta dal commerciale: resta
+  // personale, ma è richiamabile dal dettaglio dell'offerta. Diverso da
+  // sourceDeal (automazione fatturazione), che è 1:1.
+  relatedDealId   String?
+  relatedDeal     Task?                @relation("DealTasks", fields: [relatedDealId], references: [id], onDelete: SetNull)
+  dealTasks       Task[]               @relation("DealTasks")
+  // Ricorrenze amministrative che si riferiscono a questa offerta.
+  dealRecurrences RecurrenceTemplate[] @relation("DealRecurrences")
+
+  // Ticket collegato a un progetto su cui il supporto sta lavorando (riferimento,
+  // non cambia la visibilità del ticket).
+  relatedProjectId String?
+  relatedProject   Project? @relation("ProjectTickets", fields: [relatedProjectId], references: [id], onDelete: SetNull)
+
+  // Riunioni. Un incontro è a sua volta un Task, di un tipo attività con
+  // isMeeting = true: eredita data, allegati (l'ordine del giorno), ore a
+  // timesheet e ricorrenza (i SAL periodici) senza un modello dedicato.
+  //
+  // meetingId è la riunione in cui il task è NATO (1→N: un incontro genera più
+  // attività). Dove il task viene poi RIDISCUSSO è invece sui commenti
+  // (Comment.meetingId), perché quella relazione è molti-a-molti.
+  meetingId    String?
+  meeting      Task?   @relation("MeetingTasks", fields: [meetingId], references: [id], onDelete: SetNull)
+  meetingTasks Task[]  @relation("MeetingTasks")
+
+  // Presenti all'incontro (solo sui task-riunione). Testo libero: comprende
+  // funzioni aziendali e persone esterne che non sono utenti dell'applicazione.
+  participants String? @db.Text
+
+  attachments   TaskAttachment[]
+  tags          TaskTag[]
+  comments      Comment[]
+  ticketReads   TicketRead[]
+  ticketLock    TicketLock?
+  /**
+   * Note prese durante questa riunione, sui task discussi (vedi Comment.meeting).
+   */
+  meetingNotes  Comment[]        @relation("MeetingNotes")
+  activities    ActivityLog[]
+  timeEntries   TimeEntry[]
+  timesheetPins TimesheetPin[]
+  /// Riga dell'indice per la stima della durata (vedi TaskIndex).
+  index         TaskIndex?
+
+  @@unique([recurrenceTemplateId, occurrenceDate])
+  @@index([pluginNick])
+  @@index([kind, statusId])
+  @@index([assigneeId])
+  @@index([dueDate])
+  // Indici sui campi usati in ogni query (soft delete, FK, board): letture veloci
+  // quando lo storico cresce. Migrazione additiva, nessun rischio.
+  @@index([deletedAt])
+  @@index([projectId])
+  @@index([parentTaskId])
+  @@index([supervisorId])
+  @@index([creatorId])
+  @@index([predecessorId])
+  @@index([boardId])
+  @@index([boardStatusId])
+  @@index([contactId])
+  @@index([dealStageId])
+  @@index([companyId])
+  @@index([updatedAt])
+}
+
+model Project {
+  id          String    @id @default(cuid())
+  name        String @db.VarChar(255)
+  description String? @db.Text
+  color       String?
+  icon        String?
+  isArchived  Boolean   @default(false)
+  companyId   String?
+  company     Company?  @relation("ProjectCompany", fields: [companyId], references: [id], onDelete: SetNull)
+  deletedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  members             ProjectMember[]
+  ticketAccess        TicketProjectAccess[]
+  tasks               Task[]
+  relatedTickets      Task[]                @relation("ProjectTickets")
+  recurrenceTemplates RecurrenceTemplate[]  @relation("ProjectRecurrences")
+  injectRequestTypes  InjectRequestType[]
+  releaseDocuments    ProjectReleaseDocument[]
+}
+
+/// Progetti su cui un utente del portale (cliente) può aprire richieste.
+/// Separato da ProjectMember: quello dà visibilità sui task interni, questo è
+/// solo il permesso di aggiungere una richiesta al progetto giusto.
+/// Progetti su cui una persona può **aprire richieste di supporto**.
+///
+/// Nato per i clienti del portale, dal 12/08/2026 vale anche per gli interni
+/// che non gestiscono il desk (un commerciale che apre un ticket per il proprio
+/// cliente): il perimetro è lo stesso concetto, quindi è la stessa tabella.
+/// Il nome fisico resta `PortalProjectAccess` (@@map) perché rinominarla
+/// vorrebbe dire riscrivere la tabella per un'etichetta.
+model TicketProjectAccess {
+  userId    String
+  projectId String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@id([userId, projectId])
+  @@index([projectId])
+  @@map("PortalProjectAccess")
+}
+
+/// **Le note di rilascio di un progetto, in PDF** (18/09/2026): i documenti che
+/// il cliente del portale legge accanto alle sue richieste. Il file è un
+/// `Attachment` come gli altri — stesso magazzino, stesso lettore, stessi token
+/// — e questa tabella dice di quale progetto è la nota. Le legge chi può aprire
+/// richieste sul progetto (`TicketProjectAccess`) e chi vede il progetto.
+///
+/// Titolo, data di pubblicazione, descrizione e visibilità si scelgono al
+/// caricamento e si cambiano dopo: il cliente vede solo le note **visibili** e
+/// con la data di pubblicazione **arrivata** — una nota si può preparare prima
+/// del rilascio e uscire da sé quel giorno.
+model ProjectReleaseDocument {
+  projectId    String
+  attachmentId String
+  title        String @db.VarChar(255)
+  description  String? @db.Text
+  publishedAt  DateTime
+  isVisible    Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  project      Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  attachment   Attachment @relation(fields: [attachmentId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, attachmentId])
+  @@index([attachmentId])
+  @@index([projectId, isVisible, publishedAt])
+}
+
+model ProjectMember {
+  projectId String
+  userId    String
+  role      String // ProjectRole: MANAGER | EDITOR | VIEWER
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, userId])
+}
+
+// Notifiche SOLO in-app (vedi CLAUDE.md): campanella + SSE, nessuna email.
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String // task_assigned | mention | supervised_status_changed | task_comment | deal_stage | due_digest
+  payload   String @db.Text // JSON: titolo, taskId/dealId, testo
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+  // Se comparire nella campanella. Falso quando la persona ha spento il canale
+  // in-app per quel tipo ma tiene l'email: la riga resta comunque, perché è il
+  // registro di "questa persona è già stata avvisata oggi" su cui si reggono i
+  // riepiloghi giornalieri (scadenze, timesheet).
+  inApp     Boolean   @default(true)
+  /// L'email è dovuta e non è ancora partita: la persona ha chiesto di
+  /// aggregarle, e questa aspetta il prossimo riepilogo. Torna falsa quando il
+  /// riepilogo parte — o non è mai vera, se le email le riceve una per una.
+  emailPending Boolean @default(false)
+  /// La chiave che rende un avviso **unico per costruzione**: i riepiloghi
+  /// giornalieri (scadenze, timesheet) la compongono da tipo, persona e giorno,
+  /// e il database rifiuta la seconda riga. Prima il controllo era «c'è già una
+  /// riga di oggi?» seguito dalla scrittura, e due giri sovrapposti — un
+  /// riavvio durante il cron, due processi — passavano entrambi (V8 di
+  /// PLAN_OPTIMIZE, 05/09/2026). Null per gli avvisi che possono ripetersi.
+  dedupKey     String? @unique
+
+  @@index([userId, readAt])
+  @@index([userId, emailPending])
+}
+
+model NotificationPreference {
+  userId  String
+  type    String
+  // Campanella e notifica del browser.
+  enabled Boolean @default(true)
+  // Email: interruttore separato, perché "meno posta" non vuol dire "meno
+  // avvisi" (04/09/2026).
+  email   Boolean @default(true)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, type])
+}
+
+// Ore lavorate (M6): una riga per utente+task+giorno; vincolo max 24h/giorno
+// applicato a livello applicativo.
+model TimeEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  date      DateTime // mezzanotte UTC
+  hours     Float // step 0.25
+  note      String? @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, taskId, date])
+  @@index([userId, date])
+  @@index([taskId])
+}
+
+// Fasi pipeline offerte (M4), configurabili dall'admin. Il task per
+// l'amministrazione nasce dalle fasi `isWon` (vedi ensureWonDealTask).
+/// Riga tenuta nella griglia del timesheet anche senza ore: chi pianifica la
+/// settimana ci mette i task su cui dovrà lavorare, e li ritrova al rientro.
+/// Vive per (utente, mese): il mese dopo si riparte da quello che serve allora.
+/// Riga tenuta a mano nella griglia del timesheet: un task che si vuole vedere
+/// anche senza ore (chi si prepara la settimana lo ritrova al rientro).
+model TimesheetPin {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  /// Periodo a cui la riga appartiene: un mese (`2026-08`) o una settimana
+  /// (`2026-08-03`, il lunedì). Guardando una settimana le righe aggiunte sono
+  /// di quella settimana, altrimenti dalla seconda in poi ci si ritroverebbe in
+  /// griglia tutto il lavoro del mese (12/08/2026). La colonna in banca dati si
+  /// chiama ancora `month`: rinominarla vorrebbe dire riscrivere la tabella per
+  /// un'etichetta.
+  period    String   @map("month")
+  createdAt DateTime @default(now())
+
+  @@unique([userId, taskId, period], map: "TimesheetPin_userId_taskId_month_key")
+  @@index([userId, period], map: "TimesheetPin_userId_month_idx")
+  @@index([taskId])
+}
+
+/**
+ * La lettura degli allegati di un'offerta vinta, fatta da un modello locale.
+ * Una riga per offerta: contiene **tutto** quello che l'estrazione ha prodotto —
+ * i documenti letti con le loro dimensioni, le voci trovate con la citazione da
+ * cui vengono, il nome di progetto proposto — e serve tre volte: al commerciale
+ * che rivede la proposta, a chi dopo si chiede da dove venisse un importo, e a
+ * noi per capire se il modello sta migliorando o peggiorando.
+ * Non conserva il testo dei contratti: si tiene il risultato, non il documento
+ * ricopiato in banca dati.
+ */
+model DealAnalysis {
+  id            String    @id @default(cuid())
+  dealId        String    @unique
+  deal          Task      @relation("DealAnalysisDeal", fields: [dealId], references: [id], onDelete: Cascade)
+  /// Chi l'ha chiesta: è a lui che arriva l'avviso quando è pronta.
+  requestedById String
+  requestedBy   User      @relation("DealAnalysisRequester", fields: [requestedById], references: [id])
+  /// queue | running | done | failed | cancelled
+  state         String    @default("queue")
+  /// Il modello che ha risposto: un risultato senza la sua provenienza non si giudica.
+  model         String?
+  /// Nome di progetto proposto dal modello, due o tre parole.
+  projectName   String?
+  /// L'intera struttura estratta, in JSON (documenti + voci + tempi).
+  payload       String? @db.LongText
+  error         String? @db.Text
+  createdAt     DateTime  @default(now())
+  completedAt   DateTime?
+  /// Quando il commerciale ha creato i task da questa proposta.
+  appliedAt     DateTime?
+}
+
+model DealStage {
+  id     String  @id @default(cuid())
+  name   String  @unique
+  color  String
+  order  Int
+  isWon  Boolean @default(false)
+  isLost Boolean @default(false)
+
+  // Configurazione del task amministrativo generato quando un'offerta entra in una
+  // fase isWon: stato iniziale e assegnatario. Se vuoti, si usa il default globale
+  // (stato isWonTarget / billingAssignee del commerciale). Vedi ensureWonDealTask.
+  wonTaskStatusId   String?
+  wonTaskStatus     TaskStatus? @relation("WonTaskStatus", fields: [wonTaskStatusId], references: [id], onDelete: SetNull)
+  wonTaskAssigneeId String?
+  wonTaskAssignee   User?       @relation("WonTaskAssignee", fields: [wonTaskAssigneeId], references: [id], onDelete: SetNull)
+
+  deals Task[]
+}
+
+model Company {
+  id        String    @id @default(cuid())
+  name      String @db.VarChar(255)    @unique
+  vatNumber String?
+  city      String?
+  notes     String? @db.Text
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  contacts    Contact[]
+  deals       Task[]
+  crmNotes    CrmNote[]
+  portalUsers User[]    @relation("PortalUsers")
+  projects    Project[] @relation("ProjectCompany")
+}
+
+model Contact {
+  id        String    @id @default(cuid())
+  firstName String
+  lastName  String
+  email     String?
+  phone     String?
+  roleTitle String?
+  companyId String?
+  company   Company?  @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  deals    Task[]
+  crmNotes CrmNote[]
+
+  @@index([companyId])
+}
+
+// Note libere datate su contatto o azienda.
+model CrmNote {
+  id        String   @id @default(cuid())
+  contactId String?
+  contact   Contact? @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  body      String @db.Text
+  createdAt DateTime @default(now())
+}
+
+// Template di ricorrenza (M3): RRULE RFC 5545 + campi template del task.
+// Un cron giornaliero materializza le occorrenze come Task reali fino a +60 giorni.
+model RecurrenceTemplate {
+  id              String        @id @default(cuid())
+  title           String @db.VarChar(500)
+  description     String? @db.Text
+  rrule           String @db.VarChar(500) // stringa RRULE senza DTSTART (es. "FREQ=MONTHLY;BYMONTHDAY=15")
+  dtstart         DateTime // inizio serie, mezzanotte UTC
+  isActive        Boolean       @default(true)
+  // Progetto di riferimento (es. il canone trimestrale di un progetto a contratto).
+  // Le occorrenze restano task ADMIN dello scadenzario e ne portano il riferimento
+  // in Task.relatedProjectId: la visibilità non cambia, cambia la tracciabilità.
+  projectId       String?
+  project         Project?      @relation("ProjectRecurrences", fields: [projectId], references: [id], onDelete: SetNull)
+  // Offerta di riferimento (le ricorrenze amministrative si legano a un'offerta,
+  // es. il canone che nasce da una trattativa vinta). L'occorrenza porta il
+  // rimando in Task.relatedDealId; resta comunque un task dello scadenzario.
+  relatedDealId   String?
+  relatedDeal     Task?         @relation("DealRecurrences", fields: [relatedDealId], references: [id], onDelete: SetNull)
+  // Stato iniziale delle occorrenze generate, scelto dall'utente. Se nullo si usa
+  // il primo stato della categoria (comportamento storico).
+  initialStatusId String?
+  initialStatus   TaskStatus?   @relation("RecurrenceInitialStatus", fields: [initialStatusId], references: [id], onDelete: SetNull)
+  // Tipo di attività applicato a ogni occorrenza generata (opzionale).
+  activityTypeId  String?
+  activityType    ActivityType? @relation(fields: [activityTypeId], references: [id], onDelete: SetNull)
+  creatorId       String
+  creator         User          @relation("TemplateCreator", fields: [creatorId], references: [id])
+  assigneeId      String?
+  assignee        User?         @relation("TemplateAssignee", fields: [assigneeId], references: [id])
+  supervisorId    String?
+  supervisor      User?         @relation("TemplateSupervisor", fields: [supervisorId], references: [id])
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  tasks       Task[]
+  attachments RecurrenceTemplateAttachment[]
+}
+
+// Allegati-modello: collegati a ogni occorrenza materializzata (stessi Attachment,
+// nessuna copia file).
+model RecurrenceTemplateAttachment {
+  templateId   String
+  attachmentId String
+  template     RecurrenceTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  attachment   Attachment         @relation(fields: [attachmentId], references: [id], onDelete: Cascade)
+
+  @@id([templateId, attachmentId])
+}
+
+model Attachment {
+  id           String   @id @default(cuid())
+  type         String // AttachmentType: FILE | LINK
+  name         String @db.VarChar(500)
+  path         String? @db.VarChar(768) // FILE: path relativo a uploadsDir
+  url          String? @db.VarChar(1000) // LINK: URL Google Drive/Docs/...
+  mimeType     String?
+  size         Int?
+  uploadedById String
+  uploadedBy   User     @relation(fields: [uploadedById], references: [id])
+  createdAt    DateTime @default(now())
+
+  /// **Da dove viene questa riga.** Il `nick` del plugin che l'ha creata
+  /// passando da una porta dell'SDK, e un riferimento suo (`pluginRef`): l'id
+  /// del record dentro il plugin, o una chiave stabile. Nullo per tutto ciò
+  /// che nasce in KeelOps, che è quasi tutto.
+  ///
+  /// Serve alla disinstallazione: un plugin che se ne va deve poter dire cosa
+  /// ha lasciato nel core, e chi disinstalla deve poter scegliere se tenerlo,
+  /// togliergli il marchio o cancellarlo. Senza, l'unica risposta onesta a
+  /// «cosa succede se lo tolgo?» sarebbe «non si sa» (22/09/2026).
+  pluginNick   String?
+  pluginRef    String?
+
+  tasks     TaskAttachment[]
+  templates RecurrenceTemplateAttachment[]
+  comments  CommentAttachment[]
+  releaseDocuments ProjectReleaseDocument[]
+
+  @@index([pluginNick])
+}
+
+// Tabella ponte: consente la condivisione degli allegati deal→task fattura (M4)
+// senza duplicare i file su disco.
+/**
+ * **Chi sta gestendo una richiesta, adesso.**
+ * Due persone che rispondono allo stesso ticket nello stesso momento scrivono
+ * due risposte sovrapposte, e il cliente se le ritrova entrambe. Chi apre il
+ * pannello prende la richiesta in carico; agli altri resta in sola lettura, con
+ * scritto chi ce l'ha.
+ * Vale **solo per i task nati da un ticket**: altrove due persone che lavorano
+ * lo stesso task è normale, ed è la chat a tenerle insieme.
+ * Una riga per task (`taskId` è la chiave): è ciò che rende «uno solo» una
+ * garanzia del database e non una speranza. Scade da sé — `expiresAt` — e una
+ * riga scaduta vale come assente: non serve nessuno che faccia pulizia perché
+ * il lavoro riprenda.
+ */
+model TicketLock {
+  taskId     String   @id
+  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  acquiredAt DateTime @default(now())
+  expiresAt  DateTime
+
+  @@index([expiresAt])
+}
+
+model TaskAttachment {
+  taskId       String
+  attachmentId String
+  task         Task       @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  attachment   Attachment @relation(fields: [attachmentId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, attachmentId])
+  // Le ricerche per solo allegato (orfani, allegati dei messaggi) non
+  // leggevano più l'indice della chiave, che comincia col task.
+  @@index([attachmentId])
+}
+
+model Comment {
+  id           String   @id @default(cuid())
+  taskId       String
+  task         Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  authorId     String
+  author       User     @relation(fields: [authorId], references: [id])
+  body         String @db.Text
+  /// Messaggio riservato (@secret): body è cifrato (AES-256-GCM, chiave da
+  /// SECRET_KEY_CRYPTO) e si legge solo riautenticandosi.
+  secret       Boolean  @default(false)
+  /// Riservato agli interni (@reserved): in chiaro, ma i clienti del portale e
+  /// i monitor vendite non lo vedono — né nella chat, né nei conteggi, né negli
+  /// allegati arrivati con lui (16/09/2026). Vedi tasks/comment-visibility.ts.
+  reserved     Boolean  @default(false)
+  /// Mandato al cliente che ha aperto la richiesta (@user): gli è arrivata la
+  /// notifica, e quindi l'email. Il comando sparisce dal testo — è per noi, non
+  /// per chi legge — quindi senza questo campo, dopo, nessuno saprebbe più se
+  /// al cliente è stato scritto o no.
+  sentToClient Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  // Nota presa durante un incontro: è la cella della matrice attività × riunioni.
+  // Letta per task dà la cronologia del tema, letta per riunione dà il verbale.
+  // Se la riunione viene eliminata la nota resta, senza più il riferimento.
+  meetingId String?
+  meeting   Task?   @relation("MeetingNotes", fields: [meetingId], references: [id], onDelete: SetNull)
+
+  attachments CommentAttachment[]
+
+  @@index([taskId])
+  @@index([meetingId])
+  @@index([authorId])
+}
+
+/// Quando una persona ha aperto una richiesta per l'ultima volta: è ciò che
+/// accende il segnalino «messaggi non letti» nell'elenco dei ticket
+/// (14/09/2026). Sta sul server e non nel browser perché il cliente guarda le
+/// sue richieste dal telefono e dal PC, e un segnalino che sparisce su uno e
+/// resta sull'altro contraddice sé stesso. Si scrive aprendo il dettaglio, si
+/// legge insieme all'elenco (vedi tickets/letti.ts).
+model TicketRead {
+  userId String
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  taskId String
+  task   Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  seenAt DateTime
+
+  @@id([userId, taskId])
+  @@index([taskId])
+}
+
+/**
+ * **Il file allegato a un messaggio.**
+ *
+ * L'allegato resta del task — è lì che si cerca, mesi dopo, «il preventivo di
+ * quel lavoro» — e questa tabella dice in più *con quale messaggio è arrivato*,
+ * cioè in risposta a cosa. Cancellare il messaggio non porta via il file: si
+ * scioglie solo il legame con la frase che lo accompagnava.
+ */
+model CommentAttachment {
+  commentId    String
+  attachmentId String
+  comment      Comment    @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  attachment   Attachment @relation(fields: [attachmentId], references: [id], onDelete: Cascade)
+
+  @@id([commentId, attachmentId])
+}
+
+// Etichette libere applicabili ai task (many-to-many via TaskTag). Deduplicati per
+// nome; l'import ClickUp fa upsert per nome.
+model Tag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  color     String?
+  createdAt DateTime @default(now())
+
+  tasks TaskTag[]
+}
+
+model TaskTag {
+  taskId String
+  tagId  String
+  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, tagId])
+  @@index([tagId])
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  action    String // created | updated | status_changed | commented | attachment_added | attachment_removed
+  payload   String? @db.Text // JSON
+  createdAt DateTime @default(now())
+
+  @@index([taskId])
+  // "Cosa ho toccato in questo mese": la domanda del timesheet (compila dalle
+  // attività) e della tendina dei task recenti. Senza, è una scansione completa.
+  @@index([userId, createdAt])
+}
+
+// I modelli arrivano con le milestone:
+// M3: RecurrenceTemplate
+// M4: Company, Contact, CrmNote, DealStage, VisibilitySetting
+// M5: Project, ProjectMember, Notification
+// M6: TimeEntry
+
+// Board dello scadenzario: un insieme di stati propri (kanban).
+// ownerId valorizzato = board PERSONALE e privata (solo il proprietario la vede);
+// ownerId null = board CONDIVISA (Amministrativi: "Amministrative", "Fatturazione").
+/**
+ * Un calendario sottoscrivibile da Google, Outlook o dal telefono.
+ * Uno per bacheca e per persona: chi si iscrive sceglie cosa vedere, e può
+ * revocarne uno senza toccare gli altri. Il token nell'indirizzo è l'unica
+ * autenticazione possibile — i client di calendario non mandano cookie — quindi
+ * vale come una password: chi ce l'ha legge quella bacheca finché non si revoca.
+ */
+/**
+ * **Il registro delle assenze** (06/09/2026): la cache in tabella del
+ * calendario aziendale, più quello che le persone scrivono a mano.
+ *
+ * Una riga per persona e giorno: da dove viene (`source`: CALENDAR = letta dal
+ * calendario iCal e riallineata a ogni lettura; MANUAL = scritta dall'interfaccia
+ * del plugin Presenze, da sé, dal manager del gruppo o dal super admin), cosa
+ * dice (`kind`: ABSENCE con `hours` o giornata intera se null, PRESENCE = lavoro
+ * altrove che vale come presenza, NONE = «c'ero», che spegne il calendario per
+ * quel giorno) e con quale parola (`category`: ferie, permesso, malattia, sw…).
+ * **La riga manuale comanda** sulle righe del calendario dello stesso giorno:
+ * il calendario resta il modo di dichiarare da fuori, la tabella è la verità
+ * che i riepiloghi delle ore leggono. Non si scrive mai sul calendario Google.
+ *
+ * `calendarKey` è l'identità dell'evento sul calendario (UID o impronta) e
+ * vale "" per le righe manuali: così l'unicità (utente, giorno, origine,
+ * chiave) tiene una sola riga manuale per giorno — un NULL varrebbe «diverso
+ * da tutto» su entrambi i motori.
+ */
+model Absence {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation("AbsenceOf", fields: [userId], references: [id], onDelete: Cascade)
+  /** Il giorno, mezzanotte UTC (convenzione date-only). */
+  day         DateTime
+  /** AbsenceKind: ABSENCE | PRESENCE | NONE */
+  kind        String
+  /** La parola del vocabolario: ferie, permesso, malattia, sw, trasferta… */
+  category    String
+  /** Ore di assenza; null = giornata intera. */
+  hours       Float?
+  /** AbsenceSource: CALENDAR | MANUAL */
+  source      String
+  calendarKey String   @default("")
+  /** Il titolo dell'evento sul calendario, per chi guarda. */
+  title       String?
+  note        String?
+  createdById String?
+  createdBy   User?    @relation("AbsenceAuthor", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, day, source, calendarKey])
+  @@index([day])
+  @@index([userId, day])
+}
+
+model CalendarFeed {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /**
+   * MINE | SUPERVISED | PROJECT | BOARD
+   */
+  scope      String
+  /**
+   * Id del progetto o della board, per gli scope che ne hanno bisogno.
+   */
+  targetId   String?
+  /**
+   * Nome mostrato dal client di calendario.
+   */
+  label      String
+  token      String    @unique
+  /**
+   * Ultima lettura: dice se qualcuno lo sta davvero usando.
+   */
+  lastReadAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@unique([userId, scope, targetId])
+  @@index([userId])
+}
+
+model Board {
+  id        String   @id @default(cuid())
+  ownerId   String?
+  owner     User?    @relation("UserBoards", fields: [ownerId], references: [id], onDelete: Cascade)
+  name      String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  statuses BoardStatus[]
+  tasks    Task[]
+
+  @@unique([ownerId, name])
+  @@index([ownerId])
+}
+
+// Colonna (stato) di una board. Vincoli applicativi: esattamente un isInitial e
+// almeno un isClosed per board. Nessuno "Da assegnare" implicito.
+model BoardStatus {
+  id        String  @id @default(cuid())
+  boardId   String
+  board     Board   @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  name      String
+  color     String
+  order     Int
+  isInitial Boolean @default(false)
+  isClosed  Boolean @default(false)
+
+  tasks Task[]
+
+  @@unique([boardId, name])
+}
+
+/// Account di servizio per le integrazioni (osTicket, script, automazioni):
+/// si autentica da solo — nessuna sessione, nessun cookie — e **agisce per
+/// conto di una persona vera**, che resta l'autore di ciò che viene creato.
+///
+/// Il segreto non è qui: se ne conserva solo l'impronta (SHA-256), come per una
+/// password. Il prefisso serve a riconoscere una chiave negli elenchi e nei log
+/// senza mostrarla intera.
+model ApiClient {
+  id          String    @id @default(cuid())
+  /// Nome leggibile ("Integrazione osTicket").
+  name        String
+  /// Identificativo pubblico, viaggia in chiaro.
+  clientId    String    @unique
+  /// Impronta SHA-256 del segreto: il segreto in chiaro esiste una volta sola,
+  /// alla creazione.
+  secretHash  String
+  /// Prime lettere del segreto, per riconoscerlo senza rivelarlo.
+  secretHint  String
+  isActive    Boolean   @default(true)
+  /// Ultimo uso: dice se l'integrazione è viva o è una chiave dimenticata.
+  lastUsedAt  DateTime?
+  createdById String?
+  createdBy   User?     @relation("ApiClientsCreated", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+/// Un'applicazione **ospite** autorizzata a iniettare il modulo «Richiedi
+/// assistenza» nelle proprie pagine (PDFMaster Cloud, un portale cliente…).
+///
+/// È la porta gemella di `ApiClient` ma con proprietà di sicurezza opposte,
+/// ed è il motivo per cui sono due tabelle e non una: qui la chiave è
+/// **pubblica** — sta nel sorgente di una pagina che chiunque può leggere — e
+/// a difendere la porta è l'**origine** della chiamata, non un segreto. Una
+/// chiave copiata da un'altra origine non apre niente: il browser non ottiene
+/// il permesso CORS e il server rifiuta comunque.
+///
+/// Le richieste nascono a nome di un **utente di servizio** (`serviceUser`),
+/// perché chi scrive dall'applicazione ospite un utente di KeelOps non ce
+/// l'ha; nome, email e profilo veri finiscono nel titolo e in coda al testo.
+model InjectClient {
+  id            String              @id @default(cuid())
+  /// Nome leggibile ("PDFMaster Cloud").
+  name          String
+  /// Chiave pubblica: viaggia in chiaro nel sorgente della pagina ospite.
+  publicKey     String              @unique
+  /// Origini ammesse, una per riga ("https://app.edito-pdf.com"). Governa
+  /// insieme il CORS e il diritto di aprire richieste: è la stessa cosa detta
+  /// una volta sola.
+  origins       String @db.Text
+  /// L'utente a nome del quale nascono le richieste. Dev'essere abilitato sui
+  /// progetti di destinazione: valgono i SUOI permessi, come per le integrazioni.
+  serviceUserId String
+  serviceUser   User                @relation("InjectServiceUser", fields: [serviceUserId], references: [id], onDelete: Restrict)
+  /// Indirizzo a cui il richiedente può rispondere (`Reply-To` della conferma).
+  /// Lo scambio prosegue via email tra persone: in KeelOps non rientra.
+  replyTo       String?
+  /// Il nome del prodotto nell'email di conferma e nel ticket («Edito PDF
+  /// Conversion»): se vuoto, il nome del progetto del tipo di richiesta, e
+  /// in mancanza il nome del modulo (19/09/2026, `nomeProdotto` in testo.ts).
+  productName   String?
+  /// Un paragrafo in coda alla conferma: cosa tenere a portata di mano, gli
+  /// orari del supporto. Testo semplice, mai HTML.
+  mailClosing   String? @db.Text
+  isActive      Boolean             @default(true)
+  /// Quante richieste al massimo in un'ora, per indirizzo email. Il freno che
+  /// resta se qualcuno ripubblica la pagina ospite altrove.
+  hourlyLimit   Int                 @default(20)
+  lastUsedAt    DateTime?
+  createdById   String?
+  createdBy     User?               @relation("InjectClientsCreated", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  requestTypes  InjectRequestType[]
+}
+
+/// Un tipo di richiesta offerto dal modulo iniettato ("Assistenza Tecnica") e
+/// il progetto su cui le sue richieste nascono. È la mappa che permette due
+/// voci di menu distinte senza cablare niente nel JavaScript.
+model InjectRequestType {
+  id        String       @id @default(cuid())
+  clientId  String
+  client    InjectClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  /// Chiave tecnica che il widget manda ("tecnica").
+  key       String
+  /// Etichetta mostrata ("Assistenza Tecnica").
+  label     String
+  /// Icona del widget: wrench | briefcase | help.
+  icon      String       @default("help")
+  projectId String
+  project   Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  order     Int          @default(0)
+
+  @@unique([clientId, key])
+}
+
+/// Indice di riferimento per la **stima della durata**: una riga per task, con
+/// il testo normalizzato (progetto, cliente, tipo, titolo, descrizione, chat) e
+/// le ore che quel lavoro è costato davvero.
+///
+/// Lo costruisce un cron notturno, in modo incrementale. Serve a rispondere a
+/// "un'attività come questa quanto è costata le altre volte": si cercano i task
+/// più simili tra quelli **chiusi e rendicontati** e si guarda la loro mediana.
+/// Il singolo task che fa da domanda viene invece indicizzato **al momento**
+/// (vedi `insights/task-index.ts`), perché la stima si chiede quando il task è
+/// appena cambiato e l'indice notturno non l'ha ancora visto.
+model TaskIndex {
+  taskId          String   @id
+  task            Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  /// Testo normalizzato: minuscolo, senza punteggiatura, pronto per la ricerca.
+  text            String @db.LongText
+  /// Forma **canonica** scritta dal modello locale (vedi llm-normalize.ts):
+  /// una frase neutra su cosa è stato fatto, il tipo di lavoro e le parole
+  /// chiave. È ciò che rende confrontabili task scritti in modi diversi.
+  /// Assente finché il modello non è configurato o non è ancora passato.
+  summary         String? @db.Text
+  summaryKind     String?
+  summaryModel    String?
+  /// Ore registrate su questo task da chiunque, al momento dell'indicizzazione.
+  hours           Float    @default(0)
+  /// Quante persone ci hanno lavorato: distingue il task dal contenitore.
+  workers         Int      @default(0)
+  projectId       String?
+  activityTypeId  String?
+  /// Vettore del modello di embedding (Float32 in sequenza). Assente finché non
+  /// si configura Ollama: senza, la somiglianza si calcola sulle parole.
+  embedding       Bytes?
+  /// Quale modello ha prodotto il vettore: se cambia, l'indice si rifà da sé.
+  embeddingModel  String?
+  /// Utilizzabile come riferimento: chiuso, con ore, e non un contenitore.
+  isReference     Boolean  @default(false)
+  /// `Task.updatedAt` al momento dell'indicizzazione: guida l'aggiornamento
+  /// incrementale senza rileggere tutto ogni notte.
+  sourceUpdatedAt DateTime
+  updatedAt       DateTime @updatedAt
+
+  @@index([isReference])
+}

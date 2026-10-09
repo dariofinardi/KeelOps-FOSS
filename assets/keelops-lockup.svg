@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="680" height="330" viewBox="0 0 680 330" fill="none" role="img" aria-labelledby="keelops-lockup-title">
+<title id="keelops-lockup-title">KeelOps</title>
+<g stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+<path d="M110,45 C118,95 130,150 145,213" stroke-width="4"/>
+<path d="M110,45 C200,105 380,145 585,147" stroke-width="4"/>
+<path d="M145,213 C260,228 420,200 588,169" stroke-width="4"/>
+<path d="M585,147 C586,154 587,161 588,169" stroke-width="3"/>
+<path d="M114,70 C207.8,121 385.2,152.2 585.5,150" stroke-width="1.6" opacity="0.85"/>
+<path d="M119,97 C216.2,138.2 390.8,159.9 586,153" stroke-width="1.6" opacity="0.85"/>
+<path d="M125,125 C225.2,156.7 396.8,168.1 586.5,157" stroke-width="1.6" opacity="0.85"/>
+<path d="M131,152 C234.8,176.3 403.2,176.9 587,160" stroke-width="1.4" opacity="0.7"/>
+<path d="M138,180 C245,197 410,186 587.5,164" stroke-width="1.2" opacity="0.55"/>
+<path d="M298,143 L300,166" stroke-width="1.2" opacity="0.45"/>
+<path d="M418,152 L419,177" stroke-width="1.2" opacity="0.35"/>
+<path d="M508,151 L509,171" stroke-width="1.1" opacity="0.28"/>
+<path d="M60,232 L188,232" stroke-width="2.4" opacity="0.9"/>
+<path d="M232,229 L392,229" stroke-width="1.8" opacity="0.6"/>
+<path d="M436,226 L620,226" stroke-width="1.4" opacity="0.4"/>
+<path d="M96,244 L152,244" stroke-width="1.6" opacity="0.45"/>
+<path d="M262,242 L318,242" stroke-width="1.4" opacity="0.35"/>
+<path d="M470,239 L536,239" stroke-width="1.2" opacity="0.25"/>
+</g>
+<text x="340" y="300" text-anchor="middle" fill="currentColor" font-family="system-ui, -apple-system, 'Segoe UI', Inter, Helvetica, Arial, sans-serif" font-size="38" font-weight="500" letter-spacing="0.7">Keel<tspan font-weight="400" opacity="0.62">Ops</tspan></text>
+</svg>

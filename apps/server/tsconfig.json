@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": [
+      "node"
+    ]
+  },
+  "include": [
+    "src",
+    "test",
+    "prisma/seed.ts",
+    "scripts/import-clickup.ts",
+    "scripts/migrate-user.ts"
+  ]
+}

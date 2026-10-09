@@ -1,0 +1,47 @@
+{
+  "nome": "mcp",
+  "titolo": "Interfaccia MCP",
+  "versione": "0.2.0",
+  "descrizione": "Server MCP con OAuth 2.1 per collegare Claude, ChatGPT e Mistral a KeelOps in sola lettura, ciascun assistente con il perimetro dell'utente che lo ha autorizzato: task, offerte, richieste, progetti, ore, rubrica, chat, notifiche, bacheche personali e i documenti allegati (testo estratto e file). Versione base senza filtro PII: per i client fidati.",
+  "sommario": {
+    "it": "Collega Claude, ChatGPT e Mistral a KeelOps in sola lettura, con il perimetro di chi autorizza.",
+    "en": "Connects Claude, ChatGPT and Mistral to KeelOps read-only, within the authorizing user's perimeter.",
+    "fr": "Connecte Claude, ChatGPT et Mistral à KeelOps en lecture seule, dans le périmètre de qui autorise.",
+    "de": "Verbindet Claude, ChatGPT und Mistral lesend mit KeelOps, im Bereich der autorisierenden Person.",
+    "es": "Conecta Claude, ChatGPT y Mistral a KeelOps en solo lectura, dentro del perímetro de quien autoriza.",
+    "pt": "Liga o Claude, o ChatGPT e o Mistral ao KeelOps só de leitura, dentro do perímetro de quem autoriza."
+  },
+  "copyright": "© 2026 Jugaad s.r.l.",
+  "permessi": [
+    "tasks:read",
+    "projects:read",
+    "deals:read",
+    "tickets:read",
+    "timesheet:read",
+    "attachments:read",
+    "contacts:read"
+  ],
+  "ui": {
+    "voce": "Interfaccia MCP",
+    "icona": "bot",
+    "percorso": "/",
+    "menu": false
+  },
+  "licenza": "libero",
+  "usa": ["timesheet", "ticket"],
+  "health": "/health",
+  "pubblici": [
+    "OPTIONS /",
+    "POST /",
+    "DELETE /",
+    "/mcp",
+    "/.well-known/",
+    "/oauth/register",
+    "/oauth/authorize",
+    "/oauth/token",
+    "/oauth/revoke"
+  ],
+  "anchors": {
+    "profile": true
+  }
+}

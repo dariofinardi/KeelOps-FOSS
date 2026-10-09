@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mappa dei task · KeelOps</title>
+<link rel="stylesheet" href="base.css">
+<script src="tema.js"></script>
+<style>
+/* tokens, font e icone arrivano da keelops-sdk (base.css), che eredita i
+   colori dell'applicazione; qui solo il locale. La faccia in vigore è
+   `data-tema`, scritta da tema.js: mai `prefers-color-scheme`, che direbbe
+   il sistema operativo invece del tema scelto (07/09/2026). */
+:root{--ambra:#9a5b2c}
+[data-tema="dark"]{--ambra:#d9a068}
+html,body{height:100%}
+body{margin:0;background:var(--carta);color:var(--inchiostro);
+  font:var(--font);font-size:14px;display:flex;flex-direction:column}
+header{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;
+  padding:.6rem .9rem;border-bottom:1px solid var(--filo);background:var(--rilievo)}
+header h1{font-size:1rem;margin:0 .6rem 0 0;font-weight:700}
+select,button,input[type=search]{font:inherit;color:var(--inchiostro);background:var(--carta);
+  border:1.5px solid var(--filo);border-radius:.45rem;padding:.3em .7em;cursor:pointer}
+input[type=search]{cursor:text;min-width:11rem;margin-left:auto}
+select:focus-visible,button:focus-visible,input[type=search]:focus-visible{outline:2px solid var(--accento);outline-offset:1px}
+button[aria-pressed="true"]{border-color:var(--accento);color:var(--accento);background:var(--accento-fondo)}
+.finestre{display:inline-flex;border:1.5px solid var(--filo);border-radius:.45rem;overflow:hidden}
+.finestre button{border:0;border-radius:0;padding:.3em .6em}
+.finestre button[aria-pressed="true"]{background:var(--accento);color:var(--carta);border:0}
+main{flex:1;display:flex;min-height:0;position:relative}
+#canvas{flex:1;display:block;touch-action:none;cursor:grab;min-width:0}
+aside{position:absolute;right:.8rem;top:.8rem;width:21rem;max-width:min(45vw,calc(100% - 1.6rem));
+  max-height:calc(100% - 1.6rem);border:1px solid var(--filo);border-radius:.7rem;
+  background:var(--rilievo);box-shadow:0 4px 16px rgba(0,0,0,.1);display:none;
+  flex-direction:column;overflow:hidden;z-index:3}
+aside.aperto{display:flex}
+aside .corpo{overflow-y:auto;padding:.4rem 1rem 1rem}
+.testata{display:flex;align-items:center;gap:.45rem;padding:.5rem .6rem .5rem .5rem;
+  cursor:grab;user-select:none;border-bottom:1px solid var(--filo);touch-action:none}
+.testata:active{cursor:grabbing}
+.testata .titolo{flex:1;font-weight:700;font-size:.95rem;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.testata svg{width:1rem;height:1rem;fill:none;stroke:currentColor;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round;flex:none}
+.testata .grip{color:var(--tenue)}
+.testata .grip circle{fill:currentColor;stroke:none}
+button.piatto{border:0;background:none;color:var(--tenue);padding:.25em;border-radius:.35rem;
+  display:inline-flex;cursor:pointer}
+button.piatto:hover{color:var(--inchiostro);background:var(--accento-fondo)}
+.collassato .corpo{display:none}
+.collassato .testata{border-bottom:0}
+.collassato #legend-collassa svg,.collassato #pannello-collassa svg{transform:rotate(-90deg)}
+.azioni{display:flex;gap:.6rem;align-items:center;margin:.7rem 0 .2rem;flex-wrap:wrap}
+.azioni .apri{margin-top:0}
+aside dl{margin:.6rem 0;display:grid;grid-template-columns:auto 1fr;gap:.15rem .8rem;font-size:.88rem}
+aside dt{color:var(--tenue)} aside dd{margin:0}
+aside .descrizione{font-size:.87rem;color:var(--tenue);max-height:14rem;overflow-y:auto;
+  border-top:1px solid var(--filo);padding-top:.5rem;margin-top:.5rem;white-space:pre-wrap;
+  overflow-wrap:anywhere}
+aside a.apri{display:inline-block;margin-top:.7rem;background:var(--accento);color:var(--carta);
+  padding:.4em .9em;border-radius:.45rem;text-decoration:none;font-weight:600}
+aside ul{list-style:none;margin:.5rem 0;padding:0;font-size:.87rem}
+aside li{padding:.28rem 0;border-bottom:1px solid var(--filo);cursor:pointer;display:flex;gap:.4rem}
+aside li:hover{color:var(--accento)}
+aside li .pallino{width:.6rem;height:.6rem;border-radius:50%;margin-top:.35rem;flex:none}
+aside li.chiuso{opacity:.55}
+.ordina{display:flex;gap:.4rem;margin:.1rem 0 .4rem;flex-wrap:wrap}
+.gruppa{display:flex;gap:.4rem;margin:.1rem 0 .35rem;flex-wrap:wrap}
+.gruppa button{font-size:.8rem;padding:.2em .55em}
+.ordina button{font-size:.8rem;padding:.2em .55em;display:inline-flex;align-items:center;gap:.25em}
+.ordina button svg.icona{margin:0}
+#legend{position:absolute;left:.8rem;top:.8rem;background:var(--rilievo);
+  border:1px solid var(--filo);border-radius:.7rem;max-width:16rem;max-height:60%;
+  display:flex;flex-direction:column;overflow:hidden;font-size:.82rem;
+  box-shadow:0 4px 16px rgba(0,0,0,.1);z-index:2}
+#legend .corpo{overflow-y:auto;padding:.35rem .7rem .5rem}
+#legend .voce{display:flex;gap:.45rem;align-items:center;padding:.14rem 0;cursor:pointer;border:0;
+  background:none;width:100%;text-align:left;color:var(--inchiostro);font-size:.82rem}
+#legend .voce[aria-pressed="true"]{font-weight:700;color:var(--accento)}
+#legend .pallino{width:.65rem;height:.65rem;border-radius:50%;flex:none}
+#caption{position:absolute;left:.8rem;bottom:.8rem;right:.8rem;pointer-events:none;
+  font:.8rem/1.4 ui-monospace,monospace;color:var(--tenue);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#veil{position:absolute;inset:0;display:none;align-items:center;justify-content:center;
+  background:color-mix(in srgb,var(--carta) 70%,transparent)}
+#veil.acceso{display:flex}
+#progetto-nome{font-weight:600;color:var(--accento);margin-right:.4rem}
+#focus-off{position:absolute;right:.8rem;top:.8rem;max-width:24rem;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;background:var(--rilievo);
+  box-shadow:0 2px 8px rgba(0,0,0,.08);border-color:var(--accento);color:var(--accento)}
+.prog{background:var(--rilievo);border:1px solid var(--filo);border-radius:.7rem;
+  padding:1.1rem 1.4rem;min-width:min(22rem,80vw);box-shadow:0 4px 16px rgba(0,0,0,.12);
+  display:flex;flex-direction:column;gap:.55rem}
+#prog-testo{font-weight:600}
+.prog-barra{height:.55rem;border-radius:.3rem;background:var(--accento-fondo);overflow:hidden}
+#prog-fill{height:100%;width:0%;background:var(--accento);border-radius:.3rem;
+  transition:width .4s ease}
+#prog-fill.indeterminata{width:30%;animation:scorri 1.2s ease-in-out infinite alternate}
+@keyframes scorri{from{margin-left:0}to{margin-left:70%}}
+@media (prefers-reduced-motion:reduce){#prog-fill.indeterminata{animation:none;width:100%;opacity:.5}}
+#prog-tempi{font:.8rem/1.4 ui-monospace,monospace;color:var(--tenue)}
+.errore{padding:2rem;max-width:32rem;margin:0 auto}
+</style>
+</head>
+<body>
+<header>
+  <h1 data-i18n="Mappa dei task">Mappa dei task</h1>
+  <span id="progetto-nome"></span>
+  <button id="bt-tema" aria-pressed="true" data-i18n="Temi">Temi</button>
+  <button id="bt-ger" aria-pressed="true" data-i18n="Gerarchia">Gerarchia</button>
+  <button id="bt-tempo" aria-pressed="false" data-i18n="Tempo">Tempo</button>
+  <span class="finestre" role="group" aria-label="Finestra temporale">
+    <button data-finestra="1" aria-pressed="false" data-i18n="1g">1g</button>
+    <button data-finestra="7" aria-pressed="true" data-i18n="7g">7g</button>
+    <button data-finestra="14" aria-pressed="false" data-i18n="14g">14g</button>
+    <button data-finestra="28" aria-pressed="false" data-i18n="28g">28g</button>
+  </span>
+  <button id="bt-co" aria-pressed="false" data-i18n="Co-lavoro">Co-lavoro</button>
+  <button id="bt-sug" aria-pressed="false" data-i18n="Suggeriti">Suggeriti</button>
+  <button id="bt-chiusi" aria-pressed="true" data-i18n="Mostra chiusi">Mostra chiusi</button>
+  <input id="cerca" type="search" data-i18n-placeholder="Cerca nei task…" placeholder="Cerca nei task…">
+</header>
+<main>
+  <canvas id="canvas"></canvas>
+  <div id="legend" hidden>
+    <div class="testata" id="legend-testata" data-i18n-title="Sposta">
+      <svg class="grip" viewBox="0 0 24 24"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>
+      <span class="titolo" data-i18n="Task">Task</span>
+      <button class="piatto" id="legend-collassa" data-i18n-title="Comprimi"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
+    </div>
+    <div class="corpo" id="legend-corpo"></div>
+  </div>
+  <button id="focus-off" hidden></button>
+  <div id="caption"></div>
+  <div id="veil"><div class="prog">
+    <div id="prog-testo">preparo la mappa…</div>
+    <div class="prog-barra"><div id="prog-fill"></div></div>
+    <div id="prog-tempi"></div>
+  </div></div>
+  <aside id="pannello" aria-live="polite">
+    <div class="testata" id="pannello-testata" data-i18n-title="Sposta">
+      <svg class="grip" viewBox="0 0 24 24"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>
+      <button class="piatto" id="pannello-indietro" hidden data-i18n-title="Torna all'elenco"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg></button>
+      <span class="titolo" id="pannello-titolo"></span>
+      <button class="piatto" id="pannello-collassa" data-i18n-title="Comprimi"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
+      <button class="piatto" id="pannello-chiudi" data-i18n-title="Chiudi"><svg viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+    </div>
+    <div class="corpo" id="pannello-corpo"></div>
+  </aside>
+</main>
+<script src="i18n.js" defer></script>
+<script src="app.js" defer></script>
+</body>
+</html>

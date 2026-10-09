@@ -1,0 +1,55 @@
+# Dependencies
+node_modules/
+
+# Runtime data (SQLite db + uploads)
+data/*
+!data/.gitkeep
+
+# Build output
+dist/
+apps/server/public/
+apps/server/src/generated/
+
+# Env
+.env
+.env.local
+.venv
+.venv/
+lfm/.venv/
+.toolchain/
+.vscode/
+
+# E2E (Playwright)
+e2e/.data/
+test-results/
+playwright-report/
+
+# Misc
+*.log
+.DS_Store
+
+# File di lavoro import (dati utente, non versionati)
+output-monday/
+
+# Pacchetti di trasferimento
+kancrm-package-*.tar.gz
+
+# Configurazione della singola installazione: contiene l'indirizzo segreto
+# del calendario delle assenze. In repository c'è solo l'esempio.
+etc/config.json
+
+# Fine tuning dei micromodelli (lfm/): ambiente Python da 7 GB, pesi degli
+# adattatori e file derivati dal dataset. Si rifanno tutti a comando.
+lfm/.venv/
+lfm/modelli/
+lfm/sft-*.jsonl
+
+# La memoria del micromodello delle assenze: una comodità che si rifà da sé.
+data/assenze-modello.jsonl
+plugins/*/data/
+plugins/*/.env
+plugins/MCP-pro
+plugins/Presenze
+plugins/QuoteDOCX
+plugins/QABox
+plugins/Rapportini

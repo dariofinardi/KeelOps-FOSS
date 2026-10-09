@@ -1,0 +1,136 @@
+/*
+ * **I colori di KeelOps, in un file solo** (07/09/2026).
+ *
+ * Stavano dentro `apps/web/src/index.css` e li vedeva solo l'applicazione; le
+ * pagine dei plugin avevano una tavolozza loro, simile ma non uguale, e
+ * seguivano il tema del **sistema operativo** invece di quello scelto
+ * dall'utente. Ora la sorgente è questa, e la leggono in due:
+ *
+ *  - l'applicazione, che la importa da `index.css`;
+ *  - il core, che la serve ai plugin su `GET /api/tema.css` **già risolta**
+ *    per chi la chiede (chiaro, scuro, o la media query se il tema è
+ *    automatico) — vedi `modules/theme/routes.ts`.
+ *
+ * Il token `--tema` dice quale delle due facce è in vigore: le pagine dei
+ * plugin lo rispecchiano su `data-tema` con `TEMA_SCRIPT` dell'SDK, e da lì
+ * scrivono le proprie regole (`[data-tema="dark"] .cosa { … }`) invece di una
+ * media query che direbbe un'altra cosa.
+ *
+ * Chi tocca questi valori li cambia per tutti: applicazione e plugin.
+ */
+
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --radius: 0.625rem;
+  /* Quale faccia è in vigore: le pagine dei plugin la rispecchiano su `data-tema`. */
+  --tema: light;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+  --tema: dark;
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.922 0 0);
+  --sidebar-primary-foreground: oklch(0.205 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+/*
+ * Tema aziendale "Jugaad" (chiaro con accento viola del logo). Applicato quando
+ * l'utente sceglie il tema "Aziendale". In Fase 3 l'admin potrà scegliere tra più
+ * palette aziendali (viola, blu, verde acqua) tramite classi analoghe.
+ */
+.theme-jugaad {
+  --primary: #7c3aed;
+  --primary-foreground: #ffffff;
+  --ring: #7c3aed;
+  --secondary: #faf5ff;
+  --secondary-foreground: #4b2e9e;
+  --accent: #f3e8ff;
+  --accent-foreground: #5b21b6;
+  --sidebar-primary: #7c3aed;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f3e8ff;
+  --sidebar-accent-foreground: #5b21b6;
+  --sidebar-ring: #7c3aed;
+}
+
+/* Tema aziendale "radaee" (blu): chiaro con primario blu e accento arancio. */
+.theme-radaee {
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+  --ring: #2563eb;
+  --secondary: #eff6ff;
+  --secondary-foreground: #1e40af;
+  --accent: #ffedd5;
+  --accent-foreground: #9a3412;
+  --sidebar-primary: #2563eb;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #eff6ff;
+  --sidebar-accent-foreground: #1e40af;
+  --sidebar-ring: #2563eb;
+}
+
+/* Tema aziendale "padformusician" (verde acqua): chiaro con primario teal. */
+.theme-padformusician {
+  --primary: #0d9488;
+  --primary-foreground: #ffffff;
+  --ring: #0d9488;
+  --secondary: #f0fdfa;
+  --secondary-foreground: #115e59;
+  --accent: #ccfbf1;
+  --accent-foreground: #115e59;
+  --sidebar-primary: #0d9488;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f0fdfa;
+  --sidebar-accent-foreground: #115e59;
+  --sidebar-ring: #0d9488;
+}

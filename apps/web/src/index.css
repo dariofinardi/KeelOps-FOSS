@@ -1,0 +1,369 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+/* I colori stanno in un file solo, che il core serve anche ai plugin. */
+@import "../../../packages/shared/src/tema.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  /*
+   * Tailwind v4 imposta `cursor: default` sui button: senza questa regola nulla
+   * di cliccabile mostra la manina, e l'utente non distingue un pulsante da un
+   * testo. Vale per button, elementi con ruolo button e le tendine; i disabilitati
+   * mostrano il divieto, come già fanno gli input.
+   */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  select:not(:disabled),
+  summary {
+    @apply cursor-pointer;
+  }
+  button:disabled,
+  select:disabled {
+    @apply cursor-not-allowed;
+  }
+
+  /*
+   * SUL TELEFONO SI LEGGE PIÙ GRANDE (16/08/2026).
+   *
+   * L'applicazione è scritta quasi tutta in `text-sm` (14px) e `text-xs`
+   * (12px): su un monitor a mezzo metro è una scala compatta e ordinata, in
+   * mano a 30 cm è un testo che si strizza gli occhi per leggere. Invece di
+   * ritoccare `text-sm` in trecento posti — dove qualcuno resterebbe indietro —
+   * si sposta la **scala**: sotto i 640px `text-xs` vale 13px e `text-sm` 15px.
+   * Le interlinee sono rapporti (`calc(1.25/.875)`), quindi si adeguano da sé.
+   *
+   * Non si tocca `text-base` e sopra: i titoli sono già leggibili, e alzarli
+   * mangerebbe la riga.
+   */
+  @media (width < 40rem) {
+    :root {
+      --text-xs: 0.8125rem;
+      --text-sm: 0.9375rem;
+    }
+
+    /*
+     * I campi in cui si scrive stanno a 16px esatti: **sotto quella misura iOS
+     * ingrandisce la pagina** appena ci si entra dentro, e non la rimpicciolisce
+     * più — si finisce a leggere l'applicazione di traverso dopo aver toccato
+     * una casella. È una regola del sistema operativo, non una preferenza.
+     * Le caselle delle ore del timesheet restano fuori (`type=number`): lì la
+     * griglia è fatta di colonne strette, e 16px la spaccherebbero.
+     */
+    input:not([type="number"]):not([type="checkbox"]):not([type="radio"]),
+    textarea,
+    select {
+      font-size: 1rem;
+    }
+
+    /*
+     * Le tendine sono sempre comandi veri (nessuno usa un `select` per fare da
+     * testo), quindi qui l'altezza da dito si può imporre a tutte: sono scritte
+     * a mano in venti barre di filtri, e inseguirle una per una vorrebbe dire
+     * dimenticarne tre. Pulsanti e caselle di testo hanno invece il loro
+     * componente, e la misura la portano da lì (`button.tsx`, `input.tsx`).
+     */
+    select {
+      min-height: 2.5rem;
+    }
+  }
+}
+
+/*
+ * Testo descrittivo scritto con l'editor: si vede uguale mentre lo si scrive e
+ * quando lo si rilegge — è lo stesso foglio di stile a disegnarlo nei due casi.
+ * Sta qui e non in Tailwind perché il contenuto arriva come HTML già fatto
+ * (`RichText`, `dangerouslySetInnerHTML`): le classi non gliele possiamo mettere.
+ */
+@layer components {
+  .rich-text {
+    @apply text-sm leading-relaxed;
+  }
+  .rich-text > :first-child {
+    @apply mt-0;
+  }
+  .rich-text > :last-child {
+    @apply mb-0;
+  }
+  .rich-text p {
+    @apply my-2;
+  }
+  .rich-text h2 {
+    @apply mt-4 mb-2 text-base font-semibold;
+  }
+  .rich-text h3 {
+    @apply mt-3 mb-1.5 text-sm font-semibold;
+  }
+  .rich-text ul {
+    @apply my-2 list-disc pl-5;
+  }
+  .rich-text ol {
+    @apply my-2 list-decimal pl-5;
+  }
+  .rich-text li p {
+    @apply my-0;
+  }
+  .rich-text blockquote {
+    @apply my-2 border-l-2 pl-3 text-muted-foreground;
+  }
+  .rich-text pre {
+    @apply my-2 overflow-x-auto rounded-md bg-muted p-3 text-xs;
+  }
+  .rich-text code {
+    @apply rounded bg-muted px-1 py-0.5 text-xs;
+  }
+  .rich-text pre code {
+    @apply bg-transparent p-0;
+  }
+  .rich-text a {
+    @apply text-primary underline underline-offset-2;
+  }
+  .rich-text hr {
+    @apply my-3;
+  }
+  .rich-text img {
+    @apply my-2 max-w-full rounded-md;
+  }
+  /* Le tabelle incollate arrivano con qualunque larghezza: si scorre, non si
+     allarga il pannello. */
+  .rich-text table {
+    @apply my-2 w-full table-fixed border-collapse text-xs;
+  }
+  .rich-text :is(td, th) {
+    @apply border p-1.5 align-top;
+  }
+  .rich-text th {
+    @apply bg-muted text-left font-semibold;
+  }
+  /* Il suggerimento del campo vuoto: ProseMirror lascia comunque un paragrafo,
+     quindi non basta :empty. */
+  .rich-text p.is-editor-empty:first-child::before {
+    content: attr(data-placeholder);
+    @apply pointer-events-none float-left h-0 text-muted-foreground;
+  }
+}
+
+/* ── Zona di rilascio dei file ─────────────────────────────────────────────
+   Sta qui e non nelle utility ripetute a mano perché i punti che la usano sono
+   tre — allegati di un task, coda del nuovo task, nuovo task di progetto — e
+   devono comportarsi allo stesso modo: se in una schermata il bordo si accende
+   e in un'altra no, chi trascina non capisce se il rilascio è ammesso.
+
+   Il colore è quello dell'azione (primary) e non il bordo grigio di prima: un
+   `border` predefinito su un riquadro tratteggiato è indistinguibile da
+   qualunque altra scatola della pagina, e la zona si trovava solo leggendo la
+   scritta (20/08/2026). Da ferma è visibile ma discreta; sotto il trascinamento
+   è piena, e non lascia dubbi su dove il file sta per cadere. */
+@layer components {
+  .dropzone {
+    @apply rounded-md border-2 border-dashed border-primary/45 text-muted-foreground transition-colors;
+  }
+  .dropzone:hover {
+    @apply border-primary/70 text-foreground;
+  }
+  /* Il file è sopra: bordo pieno, sfondo acceso, testo del colore dell'azione. */
+  .dropzone-attiva {
+    @apply border-primary bg-primary/10 text-primary;
+  }
+}
+
+/* ── Codice sorgente negli allegati (highlight.js) ─────────────────────────
+   Le classi le mette highlight.js; i colori li diamo noi, perché il tema del
+   lettore deve seguire quello dell'applicazione — un foglio di stile suo
+   sarebbe un secondo tema da tenere allineato. Tavolozza minima: le famiglie
+   di token che si incontrano davvero, non le settanta classi del progetto. */
+@layer components {
+  .hljs {
+    @apply text-foreground;
+  }
+  :is(.hljs-keyword, .hljs-selector-tag, .hljs-built_in, .hljs-type) {
+    @apply text-violet-700 dark:text-violet-400;
+  }
+  :is(.hljs-string, .hljs-regexp, .hljs-addition) {
+    @apply text-emerald-700 dark:text-emerald-400;
+  }
+  :is(.hljs-comment, .hljs-quote) {
+    @apply italic text-muted-foreground;
+  }
+  :is(.hljs-number, .hljs-literal, .hljs-symbol) {
+    @apply text-amber-700 dark:text-amber-400;
+  }
+  :is(.hljs-title, .hljs-name, .hljs-selector-id, .hljs-selector-class) {
+    @apply text-sky-700 dark:text-sky-400;
+  }
+  :is(.hljs-attr, .hljs-attribute, .hljs-variable, .hljs-template-variable) {
+    @apply text-rose-700 dark:text-rose-400;
+  }
+  .hljs-deletion {
+    @apply text-red-700 dark:text-red-400;
+  }
+  :is(.hljs-emphasis) {
+    @apply italic;
+  }
+  :is(.hljs-strong) {
+    @apply font-semibold;
+  }
+  /* Il Markdown disegnato nell'anteprima: la resa di base senza il plugin
+     typography — titoli, elenchi, citazioni e tabelle leggibili. */
+  .prose-sm h1 {
+    @apply mb-2 mt-4 text-lg font-semibold first:mt-0;
+  }
+  .prose-sm h2 {
+    @apply mb-2 mt-4 text-base font-semibold first:mt-0;
+  }
+  .prose-sm h3 {
+    @apply mb-1.5 mt-3 text-sm font-semibold first:mt-0;
+  }
+  .prose-sm p {
+    @apply mb-2 leading-relaxed;
+  }
+  .prose-sm :is(ul, ol) {
+    @apply mb-2 flex list-disc flex-col gap-0.5 pl-5;
+  }
+  .prose-sm ol {
+    @apply list-decimal;
+  }
+  .prose-sm blockquote {
+    @apply mb-2 border-l-2 pl-3 italic text-muted-foreground;
+  }
+  .prose-sm pre {
+    @apply mb-2 overflow-x-auto rounded bg-muted p-2 text-xs;
+  }
+  .prose-sm code {
+    @apply rounded bg-muted px-1 py-0.5 text-xs;
+  }
+  .prose-sm pre code {
+    @apply bg-transparent p-0;
+  }
+  .prose-sm table {
+    @apply mb-2 w-full border-collapse text-xs;
+  }
+  .prose-sm :is(td, th) {
+    @apply border p-1.5 align-top;
+  }
+  .prose-sm th {
+    @apply bg-muted text-left font-semibold;
+  }
+  .prose-sm a {
+    @apply text-primary underline;
+  }
+  .prose-sm img {
+    @apply my-2 max-w-full rounded;
+  }
+  .prose-sm hr {
+    @apply my-3;
+  }
+}
+
+/* Il pallino dello stato che lampeggia: nell'elenco dei ticket dice «ci sono
+   messaggi che non hai letto». Batte fra il colore dello stato e il bianco —
+   solo il pallino: l'etichetta resta ferma, o l'elenco diventa un albero di
+   Natale. L'animazione vince sullo `style` inline con cui la pastiglia colora
+   il pallino: è la cascata del CSS, non un caso. Chi ha chiesto meno movimento
+   vede un anello fisso al posto del battito. */
+@keyframes pallino-lampeggia {
+  0%, 100% { background-color: currentColor; }
+  50% { background-color: #fff; }
+}
+.pallino-lampeggia {
+  animation: pallino-lampeggia 1.2s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pallino-lampeggia {
+    animation: none;
+    box-shadow: 0 0 0 2px #fff, 0 0 0 3.5px currentColor;
+  }
+}
+
+/* ── Livello di testo del lettore PDF ──────────────────────────────────────
+   Gli span li mette pdf.js (`TextLayer`) sopra il disegno della pagina, uno per
+   corsa di testo, trasparenti: servono alla ricerca, che ci evidenzia dentro le
+   parole trovate. Sono le regole essenziali di `pdf_viewer.css` di pdf.js,
+   senza il resto del suo lettore. Larghezza e altezza le fissiamo al 100%
+   della pagina: pdf.js le scrive con `round()` di CSS, che un browser di
+   qualche anno fa non conosce — e con `overflow: clip` il livello sparirebbe.
+   Il testo non si seleziona: il lettore non offre di portarsi via il
+   documento, e la selezione sarebbe un modo di farlo. */
+.pdf-testo {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  overflow: clip;
+  line-height: 1;
+  text-align: initial;
+  letter-spacing: normal;
+  word-spacing: normal;
+  text-size-adjust: none;
+  forced-color-adjust: none;
+  user-select: none;
+  --min-font-size: 1;
+  --text-scale-factor: calc(var(--total-scale-factor) * var(--min-font-size));
+  --min-font-size-inv: calc(1 / var(--min-font-size));
+}
+.pdf-testo :is(span, br) {
+  color: transparent;
+  position: absolute;
+  white-space: pre;
+  transform-origin: 0% 0%;
+  --font-height: 0;
+  font-size: calc(var(--text-scale-factor) * var(--font-height));
+  --scale-x: 1;
+  --rotate: 0deg;
+  transform: rotate(var(--rotate)) scaleX(var(--scale-x)) scale(var(--min-font-size-inv));
+}
+.pdf-testo .markedContent {
+  display: contents;
+}
+/* La parola trovata: dentro lo span di pdf.js, quindi nel flusso del suo testo. */
+.pdf-testo span.pdf-trovato {
+  position: static;
+  transform: none;
+  font-size: inherit;
+  border-radius: 2px;
+  background-color: rgb(250 204 21 / 0.45);
+}
+.pdf-testo span.pdf-trovato.pdf-attuale {
+  background-color: rgb(249 115 22 / 0.6);
+  outline: 1px solid rgb(234 88 12);
+}

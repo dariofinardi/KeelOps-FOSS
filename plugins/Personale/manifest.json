@@ -1,0 +1,33 @@
+{
+  "nome": "Personale",
+  "nick": "personale",
+  "titolo": "Bacheche personali",
+  "versione": "1.1.1",
+  "schemaVersion": 1,
+  "descrizione": "Le kanban personali di ciascuno: colonne a scelta, template, orario, archiviazione. I dati stanno nelle tabelle plugin_personale_*, che il plugin crea e mantiene da sé.",
+  "sommario": {
+    "it": "Le bacheche kanban personali di ciascuno, con colonne e template a scelta.",
+    "en": "Everyone's personal kanban boards, with their own columns and templates.",
+    "fr": "Les tableaux kanban personnels de chacun, avec colonnes et modèles au choix.",
+    "de": "Die persönlichen Kanban-Boards jeder Person, mit eigenen Spalten und Vorlagen.",
+    "es": "Los tableros kanban personales de cada uno, con columnas y plantillas a elección.",
+    "pt": "Os quadros kanban pessoais de cada um, com colunas e modelos à escolha."
+  },
+  "copyright": "© 2026 Jugaad s.r.l.",
+  "permessi": ["users:read"],
+  "ui": {
+    "voce": "Personale",
+    "icona": "icona.svg",
+    "percorso": "/",
+    "menu": true,
+    "sezione": "aree",
+    "dopo": "home",
+    "ruoli": ["ADMIN", "MEMBER"]
+  },
+  "anchors": {
+    "dashboard": true,
+    "dashboardGroups": true
+  },
+  "licenza": "libero",
+  "health": "/health"
+}

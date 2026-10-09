@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="190 35 300 300" fill="none" role="img" aria-labelledby="keelops-mark-title">
+<title id="keelops-mark-title">KeelOps</title>
+<g stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+<path d="M218,82 C222,110 234,168 246,236" stroke-width="4.5"/>
+<path d="M218,82 C262,110 350,170 466,188" stroke-width="4.5"/>
+<path d="M246,236 C300,254 400,232 468,209" stroke-width="4.5"/>
+<path d="M466,188 C467,195 467,202 468,209" stroke-width="3.2"/>
+<path d="M220,102 C266.9,128.7 356.5,178.1 466.3,191" stroke-width="1.8" opacity="0.85"/>
+<path d="M223,124 C272.3,148.9 363.5,186.7 466.6,194" stroke-width="1.8" opacity="0.82"/>
+<path d="M227,147 C278,170.5 371,196 467,197" stroke-width="1.6" opacity="0.72"/>
+<path d="M232,171 C284,193.5 379,205.9 467.3,200" stroke-width="1.4" opacity="0.58"/>
+<path d="M238,197 C290.5,218 387.5,216.5 467.7,204" stroke-width="1.2" opacity="0.42"/>
+<path d="M320,146 L321,190" stroke-width="1.2" opacity="0.32"/>
+<path d="M400,172 L401,206" stroke-width="1.1" opacity="0.24"/>
+<path d="M212,272 L318,272" stroke-width="2.4" opacity="0.85"/>
+<path d="M348,268 L468,268" stroke-width="1.6" opacity="0.5"/>
+<path d="M244,286 L296,286" stroke-width="1.6" opacity="0.42"/>
+<path d="M392,282 L442,282" stroke-width="1.2" opacity="0.28"/>
+</g>
+</svg>

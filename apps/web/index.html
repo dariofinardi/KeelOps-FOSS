@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!--
+      **Un gestionale non si indicizza.** Questa è l'applicazione interna di
+      un'azienda: nei risultati di ricerca deve comparire il sito del prodotto
+      (keelops.it), non la schermata di accesso di chi lo usa.
+
+      Vale per OGNI installazione, dimostrazione compresa. Il divieto vero è
+      l'intestazione `X-Robots-Tag` su ogni risposta (vedi `app.ts`): questo tag
+      è la seconda serratura, per il caso in cui qualcuno metta davanti un
+      proxy che le intestazioni non le passa.
+    -->
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" href="/keelops-favicon.svg" type="image/svg+xml" />
+    <!-- l'.ico vero serve a crawler e servizi favicon (Google s2) che ignorano l'SVG -->
+    <link rel="alternate icon" href="/favicon.ico" sizes="48x48 32x32 16x16" />
+    <title>KeelOps — Gestionale interno</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

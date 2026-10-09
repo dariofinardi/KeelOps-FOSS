@@ -1,0 +1,18 @@
+packages:
+  - apps/*
+  - packages/*
+  # Le UI costruite dei plugin DEL REPOSITORY: si compilano con `pnpm build`,
+  # il dist non si committa. Elencate una per una, non `plugins/*/ui`: i plugin
+  # collegati da fuori (QuoteDOCX, MCP-pro, Presenze) hanno il loro lockfile e
+  # il loro node_modules, aggiornati da installa.sh, e col glob entravano nel
+  # workspace del core, dove il lockfile bloccato del deploy non li conosce
+  # (22/09/2026).
+  - plugins/Personale/ui
+
+onlyBuiltDependencies:
+  - better-sqlite3
+  - "@prisma/client"
+  - "@prisma/engines"
+  - "@tailwindcss/oxide"
+  - esbuild
+  - prisma

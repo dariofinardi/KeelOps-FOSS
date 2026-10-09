@@ -1,0 +1,31 @@
+# Lint, typecheck and tests on every push and pull request: the same steps the
+# export of the community runs before publishing (`pnpm check`).
+name: check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # The Prisma clients and the MariaDB schema are generated, not committed.
+      - run: pnpm --filter @kancrm/server exec prisma generate
+      - run: pnpm exec tsx scripts/mariadb/genera-schema.ts
+        working-directory: apps/server
+      - run: pnpm --filter @kancrm/server exec prisma generate --schema=prisma/mariadb/schema.prisma
+        env:
+          DATABASE_URL_MARIADB: mysql://x:y@127.0.0.1:3306/z
+      - run: pnpm check

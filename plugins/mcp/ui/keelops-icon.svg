@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="190 35 300 300" role="img" aria-label="KeelOps">
+<rect x="190" y="35" width="300" height="300" rx="64" fill="#171717"/>
+<g stroke="#ffffff" fill="none" stroke-linecap="round" stroke-linejoin="round">
+<path d="M218,82 C222,110 234,168 246,236" stroke-width="9"/>
+<path d="M218,82 C262,110 350,170 466,188" stroke-width="9"/>
+<path d="M246,236 C300,254 400,232 468,209" stroke-width="9"/>
+<path d="M466,188 C467,195 467,202 468,209" stroke-width="7"/>
+<path d="M222,118 C270,143 360,182 466.5,193" stroke-width="4.5"/>
+<path d="M230,164 C282,189 376,203 467.2,199" stroke-width="3.4" opacity="0.7"/>
+<path d="M212,278 L322,278" stroke-width="6"/>
+<path d="M352,274 L466,274" stroke-width="4" opacity="0.5"/>
+</g>
+</svg>

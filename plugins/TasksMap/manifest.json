@@ -1,0 +1,34 @@
+{
+  "nome": "TasksMap",
+  "nick": "tasksmap",
+  "titolo": "Mappa dei task",
+  "versione": "0.2.1",
+  "schemaVersion": 1,
+  "descrizione": "La rete dei task di un progetto: temi dal testo, gerarchia, finestre temporali variabili, suggerimenti di parentela. Si rigenera da sola, zero configurazione; i vettori dei task stanno in plugin_tasksmap_vettore.",
+  "sommario": {
+    "it": "La mappa dei task di un progetto: temi, gerarchia e co-lavoro in un grafo.",
+    "en": "A project's task map: themes, hierarchy and co-work as a graph.",
+    "fr": "La carte des tâches d'un projet : thèmes, hiérarchie et co-travail en graphe.",
+    "de": "Die Aufgabenkarte eines Projekts: Themen, Hierarchie und Zusammenarbeit als Graph.",
+    "es": "El mapa de tareas de un proyecto: temas, jerarquía y colaboración en un grafo.",
+    "pt": "O mapa de tarefas de um projeto: temas, hierarquia e colaboração num grafo."
+  },
+  "copyright": "© 2026 Jugaad s.r.l.",
+  "permessi": [
+    "tasks:read",
+    "projects:read",
+    "timesheet:read"
+  ],
+  "ui": {
+    "voce": "Mappa",
+    "icona": "share-2",
+    "percorso": "/",
+    "menu": false
+  },
+  "licenza": "libero",
+  "usa": ["ollama"],
+  "anchors": {
+    "project": true
+  },
+  "health": "/health"
+}
