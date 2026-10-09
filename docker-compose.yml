@@ -1,0 +1,43 @@
+# KeelOps with SQLite and Caddy in front (HTTPS). Start it with:
+#
+#   KEELOPS_ADMIN_EMAIL=you@example.com docker compose up -d
+#   docker compose logs keelops     # the first administrator's temporary password
+#
+# Then open https://localhost (or https://$KEELOPS_DOMAIN). For MariaDB add
+# `-f docker-compose.mariadb.yml`. Every variable of .env.example can be added
+# under `environment`.
+services:
+  keelops:
+    image: ghcr.io/dariofinardi/keelops-community:latest
+    build: .
+    restart: unless-stopped
+    environment:
+      APP_BASE_URL: https://${KEELOPS_DOMAIN:-localhost}
+      KEELOPS_ADMIN_EMAIL: ${KEELOPS_ADMIN_EMAIL:-}
+      KEELOPS_ADMIN_NAME: ${KEELOPS_ADMIN_NAME:-Administrator}
+      # Caddy is another container: believe its X-Forwarded-For (see .env.example).
+      TRUST_PROXY: loopback,uniquelocal
+    volumes:
+      - keelops-data:/app/data
+      - keelops-config:/etc/keelops
+    # No published port: only Caddy reaches the application.
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on: [keelops]
+    environment:
+      KEELOPS_DOMAIN: ${KEELOPS_DOMAIN:-localhost}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  keelops-data:
+  keelops-config:
+  caddy-data:
+  caddy-config:

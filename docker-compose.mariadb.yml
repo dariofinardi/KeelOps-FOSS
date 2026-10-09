@@ -1,0 +1,36 @@
+# MariaDB instead of SQLite:
+#
+#   MARIA_DB_PASS=… MARIADB_ROOT_PASSWORD=… KEELOPS_ADMIN_EMAIL=you@example.com \
+#     docker compose -f docker-compose.yml -f docker-compose.mariadb.yml up -d
+services:
+  keelops:
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    environment:
+      DB_ENGINE: mariadb
+      MARIA_DB_HOST: mariadb
+      MARIA_DB_PORT: "3306"
+      MARIA_DB_USER: keelops
+      MARIA_DB_PASS: ${MARIA_DB_PASS:?set MARIA_DB_PASS}
+      MARIA_DB_NAME: keelops
+
+  mariadb:
+    image: mariadb:11
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: keelops
+      MARIADB_USER: keelops
+      MARIADB_PASSWORD: ${MARIA_DB_PASS:?set MARIA_DB_PASS}
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:?set MARIADB_ROOT_PASSWORD}
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - keelops-mariadb:/var/lib/mysql
+
+volumes:
+  keelops-mariadb:

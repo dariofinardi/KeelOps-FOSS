@@ -1,0 +1,11 @@
+.git
+**/node_modules
+data
+.env
+**/.env
+apps/server/public
+apps/server/src/generated
+apps/server/prisma/mariadb/schema.prisma
+**/dist
+test-results
+playwright-report

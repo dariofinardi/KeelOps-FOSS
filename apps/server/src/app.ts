@@ -124,7 +124,7 @@ export async function buildApp(): Promise<FastifyInstance> {
      * sporcando i log. Così l'intestazione vale solo se a portarla è il
      * proxy locale; per chi arriva diretto resta l'indirizzo vero del peer.
      */
-    trustProxy: "loopback",
+    trustProxy: config.trustProxy,
   });
   registraElencoRotte(app);
   // I ruoli che i moduli dell'edizione portano (portale, monitor vendite):

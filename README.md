@@ -12,6 +12,10 @@ commercial edition with more modules exists (see
 Try both before installing: **community.keelops.it** runs this edition,
 **demo.keelops.it** the commercial one, on the same sample data.
 
+It is released in two forms: **the source code**, here, and **a Docker image**,
+`ghcr.io/dariofinardi/keelops-community`, with a `docker-compose.yml` that puts
+HTTPS in front of it (see [Installing](#installing)).
+
 ## What it does
 
 ### Deadlines (the administrative calendar)
@@ -104,13 +108,13 @@ Try both before installing: **community.keelops.it** runs this edition,
 
 **To run it**
 
-|               |                                                                                                                      |
-| ------------- | -------------------------------------------------------------------------------------------------------------------- |
-| Node.js       | 20 or newer (tested on 22)                                                                                           |
-| pnpm          | 10 (`corepack enable`)                                                                                               |
-| Database      | SQLite (built in, fine for trying it and for small teams) or **MariaDB** (recommended in production; tested on 10.6) |
-| Optional      | an SMTP server for email, Ollama for the plugins that use a local model, a Google Cloud Storage bucket for the files |
-| In production | a reverse proxy with TLS (nginx, Caddy…): sessions use `Secure` cookies                                              |
+|               |                                                                                                                         |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Node.js       | 20 or newer (tested on 22)                                                                                              |
+| pnpm          | 10 (`corepack enable`)                                                                                                  |
+| Database      | SQLite (built in, fine for trying it and for small teams) or **MariaDB** (recommended in production; tested on 10.6)    |
+| Optional      | an SMTP server for email, Ollama for the plugins that use a local model, a Google Cloud Storage bucket for the files    |
+| In production | a reverse proxy with TLS (nginx, Caddy…): sessions use `Secure` cookies; with Docker, the Caddy of `docker-compose.yml` |
 
 **Main libraries**: Fastify, Prisma (with the SQLite and MariaDB driver adapters),
 zod, rrule, node-cron, argon2, nodemailer, web-push, sharp, ExcelJS, SheetJS (a
@@ -124,7 +128,32 @@ used unmodified: the MariaDB connector (LGPL-2.1), libvips inside sharp
 
 ## Installing
 
-### To try it
+### With Docker
+
+The image contains the server and the built web app; `docker-compose.yml` adds
+[Caddy](https://caddyserver.com) for HTTPS — a local certificate on `localhost`,
+a Let's Encrypt one as soon as `KEELOPS_DOMAIN` is a domain pointing at the
+machine.
+
+```bash
+KEELOPS_ADMIN_EMAIL=you@example.com docker compose up -d
+docker compose logs keelops      # the first administrator's temporary password
+# then open https://localhost — or, on a server:
+KEELOPS_DOMAIN=keelops.example.com KEELOPS_ADMIN_EMAIL=you@example.com docker compose up -d
+```
+
+- Data live in two volumes: `keelops-data` (database, attachments, backups) and
+  `keelops-config` (the password pepper and the key of confidential messages,
+  created at the first start). **Back up both**: without `keelops-config` nobody
+  can sign in and confidential messages cannot be read.
+- MariaDB instead of SQLite:
+  `MARIA_DB_PASS=… MARIADB_ROOT_PASSWORD=… docker compose -f docker-compose.yml -f docker-compose.mariadb.yml up -d`.
+- Every variable of `.env.example` (mail, Ollama, limits…) can be added under
+  `environment` in `docker-compose.yml`.
+- Updating: `docker compose pull && docker compose up -d`; the tables are
+  brought up to date at every start.
+
+### From source, to try it
 
 ```bash
 pnpm install
@@ -134,7 +163,7 @@ pnpm db:seed           # sample structure and users (admin@kancrm.local / admin1
 pnpm dev               # API on :3001, web app on http://localhost:5173
 ```
 
-### In production
+### From source, in production
 
 ```bash
 cp .env.example .env            # and fill it in: NODE_ENV, APP_BASE_URL, database, mail

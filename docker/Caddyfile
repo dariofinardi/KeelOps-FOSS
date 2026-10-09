@@ -1,0 +1,7 @@
+# HTTPS in front of KeelOps. With KEELOPS_DOMAIN set to a real domain pointing
+# at this machine, Caddy gets a Let's Encrypt certificate by itself; with the
+# default (localhost) it uses its own local certificate (the browser warns once).
+{$KEELOPS_DOMAIN:localhost} {
+	encode zstd gzip
+	reverse_proxy keelops:3001
+}

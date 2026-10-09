@@ -59,6 +59,13 @@ function leggiDemo(
 export const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(3001),
   /**
+   * Whose `X-Forwarded-For` to believe (Fastify `trustProxy`): `loopback` — the
+   * proxy on the same machine, as in every installation behind nginx. In Docker
+   * the proxy is another container: `loopback,uniquelocal` trusts the private
+   * networks too (the application port must then not be published).
+   */
+  TRUST_PROXY: z.string().default("loopback"),
+  /**
    * I plugin da caricare DENTRO il processo del core (side-loaded) ed erogare
    * come `/plugins/<nome>/…`: un elenco di nomi, es. `TasksMap,mcp`
    * (le cartelle corrispondenti sotto `plugins/`).
@@ -318,6 +325,7 @@ export const config = {
    */
   analytics: leggiConfigAnalytics(env.DEMO, env.GA_MEASUREMENT_ID, env.GA_API_SECRET),
   isDev: process.env.NODE_ENV !== "production",
+  trustProxy: env.TRUST_PROXY,
   // Redirect verso HTTPS: attivo solo in produzione (in sviluppo non c'è TLS e
   // manderebbe il browser su una porta che non risponde). HTTPS_REDIRECT_PORT=0
   // lo disattiva anche lì.
