@@ -5,8 +5,8 @@ their choosing, templates, due dates with a time, archiving — separate from
 the team's work and visible to nobody else. It used to be a core feature
 (`modules/boards/`, `features/boards/`); since 05/09/2026 it is a plugin that
 **owns its data**, the first written against the current plugin contract
-(`plugins/LEGGIMI.md`, "Dati propri"). The plan, with measurements and checks,
-is in `plan/plugin-personale.md`.
+(`plugins/README.md`, "Own data: the plugin's tables"). The checks are in
+`selftest.mjs` (internal design notes: `plan/plugin-personale.md`).
 
 ## What the user sees
 
@@ -16,7 +16,8 @@ is in `plan/plugin-personale.md`.
   again if deleted.
 - **Columns** per board, with a colour, exactly one initial column and at
   least one closing column; five templates (basic, with review, GTD,
-  Eisenhower, week). A column that still holds cards cannot be removed.
+  Eisenhower, week). Column names are distinct within a board, and a column
+  that still holds cards cannot be removed.
   The personal order of the columns is a preference of the core's profile
   (`/api/profile/column-order`, key `board:<id>`), the same one the core
   feature used.
@@ -33,14 +34,14 @@ is in `plan/plugin-personale.md`.
   keyboard access to everything.
 - **On the dashboard** (the core's "La mia giornata"): a tile with the open
   cards (`anchors.dashboard`), and since 06/09/2026 a third chip, **Personali**,
-  next to *Miei* and *Supervisionati* on each deadline group — overdue,
+  next to _Miei_ and _Supervisionati_ on each deadline group — overdue,
   today, tomorrow, next days, no date — with the count of personal cards in
   that group and, when chosen, the cards themselves inside the tile
   (`anchors.dashboardGroups`).
 - **In the morning digest**: a line such as «Bacheche personali: 3 in
   ritardo, 1 in scadenza oggi», in the recipient's language, appended to the
   core's 7:00 e-mail (`riepilogoMattutino`, the first hook the core offers
-  *to* plugins).
+  _to_ plugins).
 - **Six languages**: Italian is the key, English, French, German, Spanish and Portuguese
   are catalogues in `ui/src/i18n.ts`; the language is the one the core saved
   (`kancrm-lang`, same origin, same `localStorage`).
@@ -52,14 +53,14 @@ is in `plan/plugin-personale.md`.
 Six tables, all `plugin_personale_*`, created and migrated by the plugin
 (`lib/schema.mjs`), versioned in `plugin_personale_config`:
 
-| table | holds |
-|---|---|
-| `config` | `plugin_version`, `schema_version` and settings (the SDK creates it first) |
-| `owner` | who already received the welcome board — once |
-| `board` | boards, with owner and tab position |
-| `status` | the columns of each board |
-| `task` | the cards |
-| `activity` | the cards' history |
+| table      | holds                                                                          |
+| ---------- | ------------------------------------------------------------------------------ |
+| `config`   | `plugin_version`, `schema_version` and settings (the SDK creates it first)     |
+| `owner`    | who already received the welcome board — once                                  |
+| `board`    | boards, with owner and tab position                                            |
+| `status`   | the columns of each board (one initial, at least one closing)                  |
+| `task`     | the cards: title, description, due date and time, assignee, closing, archiving |
+| `activity` | the cards' history                                                             |
 
 Foreign keys point one way only, from the plugin to the core (`User`,
 `ON DELETE CASCADE`), never the other way: a disabled plugin must not break a
@@ -80,7 +81,8 @@ reads the plugins' sources and refuses otherwise.
 
 ## API
 
-Under `/plugins/Personale/api/`, JSON, session cookie of KeelOps:
+Under `/plugins/Personale/api/`, JSON, session cookie of KeelOps — the same
+shapes the core feature had:
 
 ```
 GET    boards                       my boards, with columns
@@ -124,6 +126,11 @@ cd ui && pnpm build                       # the page (also done by the root `pnp
 node server.mjs                           # standalone, KEELOPS_DB=<copy of the db> in .env
 node selftest.mjs /path/to/a/COPY.db      # never the real one: it writes sessions and boards
 ```
+
+Unlike the other plugins, Personale writes, so standalone mode opens the
+database file for writing: hence the copy. Every rule listed above has its
+check in `selftest.mjs` (a private board answers 404 to another user, a
+duplicate name 409).
 
 In the core: `e2e/plugin-personale.spec.ts` (Playwright: menu entry, welcome
 board, card with a time, drag between columns, filters, the phone), and

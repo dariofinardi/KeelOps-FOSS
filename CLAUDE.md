@@ -127,7 +127,7 @@ commits.
 
 ## Plugins
 
-Plugins (`plugins/`, the contract is `plugins/LEGGIMI.md`, the SDK documentation
+Plugins (`plugins/`, the contract is `plugins/README.md`, the SDK documentation
 `plugins/keelops-sdk/docs/`) run **inside** the core process and are written in
 English. Everything goes **through the SDK**: never `node:sqlite`, Prisma or a
 database client in a plugin, never the core's `.env`. Reads go through a connection

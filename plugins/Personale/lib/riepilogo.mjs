@@ -1,6 +1,6 @@
 /**
  * The plugin's line in the core's morning digest (contract: `riepilogoMattutino`
- * in what `create()` returns, see plugins/LEGGIMI.md). The core asks once a
+ * in what `create()` returns, see plugins/README.md). The core asks once a
  * day, for everyone; the plugin answers with the people who have personal
  * cards overdue or due today/tomorrow, and a function that writes the line in
  * a given locale — the core knows each recipient's language, the plugin does

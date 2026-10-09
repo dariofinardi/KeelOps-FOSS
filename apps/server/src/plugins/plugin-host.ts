@@ -42,7 +42,7 @@ import {
  * osTicket) non c'entrano e non cambiano.
  *
  * Ogni plugin espone `plugins/<nome>/plugin.mjs` con `create(ctx)` → rotte in
- * stile tabella + cartella statica (contratto in `plugins/LEGGIMI.md`); il
+ * stile tabella + cartella statica (contratto in `plugins/README.md`); il
  * dispatcher è quello condiviso di `keelops-sdk/http.mjs`, lo stesso del modo
  * autonomo usato in sviluppo: un solo instradamento, impossibile che diverga.
  *
@@ -142,7 +142,7 @@ interface Manifest {
 
 /**
  * Il contributo di un plugin al riepilogo delle 7:00 (contratto in
- * plugins/LEGGIMI.md, «Il riepilogo del mattino»): per ogni persona che ha
+ * plugins/README.md, «Il riepilogo del mattino»): per ogni persona che ha
  * qualcosa da sentirsi dire, una funzione che scrive le righe nella sua
  * lingua — il core sa la lingua del destinatario, il plugin no.
  */

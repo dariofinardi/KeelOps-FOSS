@@ -9,7 +9,7 @@ export type ConteggiGruppi = Record<GruppoGiornata, number>;
 /**
  * **Le card dei plugin nei riquadri della giornata.** Un plugin che dichiara
  * l'ancora `dashboardGroups` risponde su `api/gruppi` con quante ne ha per
- * gruppo (contratto in plugins/LEGGIMI.md): la pastiglia «Personali» somma
+ * gruppo (contratto in plugins/README.md): la pastiglia «Personali» somma
  * i numeri, e da aperta mostra la pagina del plugin dentro il riquadro con
  * `?ancora=dashboardGroups&gruppo=<chiave>`. Senza plugin con quell'ancora
  * la pastiglia non esiste: la pagina ospite non deve sapere se ne esistono.
