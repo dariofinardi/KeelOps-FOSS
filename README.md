@@ -9,8 +9,11 @@ MariaDB.
 This is the **community edition**, free software under the GNU AGPL v3. A
 commercial edition with more modules exists (see
 [What the community edition does not include](#what-the-community-edition-does-not-include)).
-Try both before installing: **community.keelops.it** runs this edition,
-**demo.keelops.it** the commercial one, on the same sample data.
+Try both before installing: [community.keelops.it](https://community.keelops.it)
+runs this edition, [demo.keelops.it](https://demo.keelops.it) the commercial one,
+on the same sample data. What KeelOps is, the two editions side by side, the
+plugins and the SDK documentation are on **[keelops.it](https://keelops.it)**.
+KeelOps is made by **[Jugaad](https://jugaad.digital)**.
 
 It is released in two forms: **the source code**, here, and **a Docker image**,
 `ghcr.io/dariofinardi/keelops-community`, with a `docker-compose.yml` that puts
@@ -191,7 +194,7 @@ update: `.env.example` explains every variable.
 
 ## Licence
 
-KeelOps Community is © 2026 Jugaad s.r.l., released under the **GNU Affero General
+KeelOps Community is © 2026 [Jugaad s.r.l.](https://jugaad.digital), released under the **GNU Affero General
 Public License, version 3** ([LICENSE](LICENSE)). You may use, study, change and
 share it; if you let people use a modified version over a network, you must offer
 them its source code.
@@ -221,7 +224,8 @@ or hosted by us):
 
 The database is the same in both editions: you can move from one to the other
 without migrating data. Moving data from ClickUp, Monday or Jira, and plugins made
-for your company, are available as a professional service.
+for your company, are available as a professional service: see
+[keelops.it](https://keelops.it) or write to [Jugaad](https://jugaad.digital).
 
 ## Security
 
