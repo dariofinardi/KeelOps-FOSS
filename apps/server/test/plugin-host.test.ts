@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync, rmSync, existsSync } from "node:fs";
+import { mkdirSync, writeFileSync, rmSync, existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { spawn, type ChildProcess } from "node:child_process";
@@ -18,8 +18,16 @@ const { dbPath } = prepareTestDb("plugin-host");
  */
 const pluginsDir = path.join(os.tmpdir(), `kancrm-plugin-host-${process.pid}`);
 const serverDir = path.resolve(import.meta.dirname, "..");
-/** The spawned server inherits the edition: commercial unless told otherwise. */
-const community = process.env.KEELOPS_EDITION === "community";
+/**
+ * The edition of the spawned server, decided as the server decides it
+ * (`edizioneInVigore`): the community when told so, or when the commercial
+ * module list is the empty stub of the exported tree — there KEELOPS_EDITION
+ * is usually not set at all (the GitHub CI does not set it).
+ */
+const senzaModuliCommerciali = /MODULI_COMMERCIALI[^=]*=\s*\[\s*\]/.test(
+  readFileSync(path.join(serverDir, "src", "commercial", "index.ts"), "utf8"),
+);
+const community = process.env.KEELOPS_EDITION === "community" || senzaModuliCommerciali;
 mkdirSync(path.join(pluginsDir, "eco", "ui"), { recursive: true });
 writeFileSync(
   path.join(pluginsDir, "eco", "ui", "index.html"),
