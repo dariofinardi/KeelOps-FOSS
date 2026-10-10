@@ -9,4 +9,4 @@
  * Serve a rispondere alla domanda "cosa c'è in produzione adesso?": la mostrano
  * `/api/health` e la pagina Sistema.
  */
-export const APP_VERSION = "0.12.67";
+export const APP_VERSION = "0.12.68";
