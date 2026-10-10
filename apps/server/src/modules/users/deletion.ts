@@ -70,6 +70,7 @@ export async function userDeletionImpact(userId: string): Promise<UserDeletionIm
       prismaRaw.projectMember.count({ where: { userId } }),
       prismaRaw.crmNote.count({ where: { authorId: userId } }),
       prismaRaw.activityLog.count({ where: { userId } }),
+      // A commercial table the core must know (see the note at `modulo` below).
       prismaRaw.dealAnalysis.count({ where: { requestedById: userId } }),
     ]);
 
@@ -161,6 +162,17 @@ async function transferProjectMemberships(
 async function assertDeletable(user: User, currentUserId: string): Promise<void> {
   if (user.id === currentUserId) throw badRequest("Non puoi eliminare il tuo stesso account");
   if (user.isSystem) throw badRequest("L'utente di sistema non è eliminabile");
+  /**
+   * **A commercial table, handled by the core in both editions** (10/10/2026).
+   * The database schema is one for the community and the commercial edition;
+   * `DealAnalysis` and `InjectClient` point at `User` with a foreign key that
+   * forbids deleting the user, so a community started on a database that was
+   * commercial would fail here with a bare database error. The core therefore
+   * counts, moves or refuses these rows itself, even when the module that
+   * writes them is not loaded. If you add a commercial table that references
+   * `User` with Restrict, add it here, in migration.ts and in
+   * edizioni/schema-edizioni.txt — see apps/server/prisma/EDIZIONI.md.
+   */
   /**
    * L'utente a nome del quale un modulo iniettabile apre le richieste: la sua
    * chiave è RESTRICT per scelta (senza, il modulo smetterebbe di funzionare in
@@ -261,7 +273,8 @@ export async function deleteUser(
       where: { lockedById: userId },
       data: { lockedById: target.id },
     });
-    // Chiave RESTRICT: senza, l'eliminazione falliva (08/10/2026).
+    // Chiave RESTRICT: senza, l'eliminazione falliva (08/10/2026). A commercial
+    // table, moved by the core in both editions: see the note at `modulo` above.
     await tx.dealAnalysis.updateMany({
       where: { requestedById: userId },
       data: { requestedById: target.id },

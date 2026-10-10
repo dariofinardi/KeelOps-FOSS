@@ -4,3 +4,4 @@ data/
 apps/server/public/
 pnpm-lock.yaml
 apps/server/prisma/migrations/
+apps/server/prisma/EDIZIONI.md

@@ -117,6 +117,10 @@ export async function mergeUser(from: User, to: User): Promise<MergeCounts> {
     ).count;
     // Chiavi RESTRICT dei moduli: senza, la fusione falliva sull'eliminazione
     // finale (08/10/2026). Non hanno un contatore: il riepilogo resta com'era.
+    // These are commercial tables, moved by the core in both editions on
+    // purpose: the schema is one, and a community on a database that was
+    // commercial must merge users too. See deletion.ts and
+    // apps/server/prisma/EDIZIONI.md before adding another.
     await tx.dealAnalysis.updateMany({
       where: { requestedById: from.id },
       data: { requestedById: to.id },
