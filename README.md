@@ -133,28 +133,127 @@ used unmodified: the MariaDB connector (LGPL-2.1), libvips inside sharp
 
 ### With Docker
 
-The image contains the server and the built web app; `docker-compose.yml` adds
-[Caddy](https://caddyserver.com) for HTTPS — a local certificate on `localhost`,
-a Let's Encrypt one as soon as `KEELOPS_DOMAIN` is a domain pointing at the
-machine.
+**What you need**: Docker with the Compose plugin (`docker compose version`), a
+machine with 2 GB of RAM, and — for a real installation — a domain name pointing
+at it with ports 80 and 443 reachable. Nothing to build: the image comes from the
+registry.
+
+**What runs**: two containers, three with MariaDB. KeelOps publishes its own
+image; the other two are the official ones of their projects.
+
+| Container | Image                                    | Role                                                                                    |
+| --------- | ---------------------------------------- | --------------------------------------------------------------------------------------- |
+| `keelops` | `ghcr.io/dariofinardi/keelops-community` | the server and the web app, on port 3001 inside the network                             |
+| `caddy`   | `caddy:2`                                | HTTPS in front: a local certificate on `localhost`, Let's Encrypt on a real domain      |
+| `mariadb` | `mariadb:11`                             | the database, only with `docker-compose.mariadb.yml`; otherwise SQLite inside `keelops` |
+
+**1. Get the compose files.** Clone the repository, or download just
+`docker-compose.yml`, `docker-compose.mariadb.yml` and `docker/Caddyfile`
+into a folder of their own.
+
+```bash
+git clone https://github.com/dariofinardi/KeelOps-FOSS.git keelops && cd keelops
+```
+
+**2. Start it.** With SQLite (fine to try it, and for a small team):
 
 ```bash
 KEELOPS_ADMIN_EMAIL=you@example.com docker compose up -d
-docker compose logs keelops      # the first administrator's temporary password
-# then open https://localhost — or, on a server:
+```
+
+With MariaDB (recommended for production): first write a `.env` file next to
+`docker-compose.yml` with the two database passwords, which Compose reads and
+you will need again for backups —
+
+| Variable                | Value                                                        |
+| ----------------------- | ------------------------------------------------------------ |
+| `MARIA_DB_PASS`         | the password of the `keelops` database user, long and random |
+| `MARIADB_ROOT_PASSWORD` | the password of the MariaDB root, long and random            |
+| `KEELOPS_ADMIN_EMAIL`   | your address, the first administrator                        |
+
+— then:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.mariadb.yml up -d
+```
+
+The first start creates the password pepper and the key of confidential messages,
+creates the tables, seeds statuses, deal stages and activity types, and creates
+the first administrator. Then:
+
+```bash
+docker compose logs keelops | grep "Password provvisoria"   # the temporary password
+```
+
+**3. Sign in** at `https://localhost` (the browser warns once about the local
+certificate) with `KEELOPS_ADMIN_EMAIL` and the temporary password; KeelOps asks
+you to choose your own. On a server, set the domain before the first start and
+Caddy obtains the certificate by itself:
+
+```bash
 KEELOPS_DOMAIN=keelops.example.com KEELOPS_ADMIN_EMAIL=you@example.com docker compose up -d
 ```
 
-- Data live in two volumes: `keelops-data` (database, attachments, backups) and
-  `keelops-config` (the password pepper and the key of confidential messages,
-  created at the first start). **Back up both**: without `keelops-config` nobody
-  can sign in and confidential messages cannot be read.
-- MariaDB instead of SQLite:
-  `MARIA_DB_PASS=… MARIADB_ROOT_PASSWORD=… docker compose -f docker-compose.yml -f docker-compose.mariadb.yml up -d`.
-- Every variable of `.env.example` (mail, Ollama, limits…) can be added under
-  `environment` in `docker-compose.yml`.
-- Updating: `docker compose pull && docker compose up -d`; the tables are
-  brought up to date at every start.
+The same `.env` file can hold `KEELOPS_DOMAIN` and `KEELOPS_ADMIN_EMAIL`, so
+that `docker compose up -d` needs nothing else.
+
+**Configuring KeelOps** (mail, Ollama, limits…): every variable of
+`.env.example` goes under `environment` of the `keelops` service. Keep your
+changes in a `docker-compose.override.yml`, which Compose merges automatically,
+so that updates of the repository do not touch them:
+
+```yaml
+services:
+  keelops:
+    environment:
+      MAILER_HOST: smtp.example.com
+      MAILER_PORT: "587"
+      MAILER_USERNAME: keelops
+      MAILER_PASSWORD: "…"
+      MAILER_FROM: "KeelOps <no-reply@example.com>"
+      OLLAMA_URL: http://host.docker.internal:11434
+    # Ollama on the host machine: on Linux this line makes the name resolve.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+```
+
+**Where the data are, and backups.** Three named volumes:
+
+| Volume            | Content                                                  | Back it up?                                                                      |
+| ----------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `keelops-data`    | SQLite database (`app.db`), attachments, nightly backups | yes                                                                              |
+| `keelops-config`  | the password pepper and the key of confidential messages | **yes — without it nobody can sign in and confidential messages cannot be read** |
+| `keelops-mariadb` | the MariaDB database, with `docker-compose.mariadb.yml`  | yes                                                                              |
+
+A copy of a volume, as a `.tgz` in the current folder:
+
+```bash
+docker run --rm -v keelops_keelops-config:/v -v "$PWD":/b busybox tar czf /b/keelops-config.tgz -C /v .
+```
+
+(`keelops_` is the Compose project name, the folder's name by default: `docker volume ls` shows the exact names.) With MariaDB, prefer a dump:
+`docker compose exec mariadb mariadb-dump -ukeelops -p keelops > keelops.sql`
+(it asks for the password).
+
+**Updating**:
+
+```bash
+docker compose pull && docker compose up -d
+```
+
+The tables are brought up to date at every start. `latest` follows the main
+branch; `ghcr.io/dariofinardi/keelops-community:X.Y.Z` pins a release (the
+version is in the Help page of the app), `sha-…` a commit.
+
+**Useful commands**: `docker compose logs -f keelops` (the server's log),
+`docker compose ps` (state and health), `docker compose down` (stop; the
+volumes stay), `docker compose down -v` (stop and **delete everything**).
+
+**Behind your own reverse proxy** (nginx, Traefik…): remove the `caddy` service,
+publish the application port on the loopback only
+(`ports: ["127.0.0.1:3001:3001"]` under `keelops`), set `TRUST_PROXY: loopback`
+and terminate TLS in your proxy; `APP_BASE_URL` must be the public address.
+Sessions use `Secure` cookies: plain HTTP does not sign you in.
 
 ### From source, to try it
 
