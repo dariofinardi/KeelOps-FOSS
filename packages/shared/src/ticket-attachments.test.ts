@@ -29,7 +29,7 @@ describe("allegati ammessi in una richiesta di supporto", () => {
       "scatto.heic",
       // Testo semplice (19/09/2026): il log dell'app dal Microsoft Store.
       "appunti.txt",
-      "edito-2026-09-19.LOG",
+      "app-2026-09-19.LOG",
     ]) {
       expect(isAllowedTicketAttachment(name), name).toBe(true);
     }
@@ -67,12 +67,12 @@ describe("allegati ammessi in una richiesta di supporto", () => {
 /**
  * Le estensioni si configurano dalla pagina Sistema e le scrive una persona:
  * col punto o senza, in maiuscolo, separate da virgole o da spazi. Se la
- * normalizzazione non regge, un cliente si vede rifiutare un `.padmu` che
+ * normalizzazione non regge, un cliente si vede rifiutare un `.dwg` che
  * l'amministratore crede di aver ammesso.
  */
 describe("le estensioni configurate in più", () => {
   it("accetta come le scrive una persona", () => {
-    expect(parseExtraExtensions("padmu, .PADMU2  ;dwg")).toEqual([".padmu", ".padmu2", ".dwg"]);
+    expect(parseExtraExtensions("dwg, .STEP  ;ifc")).toEqual([".dwg", ".step", ".ifc"]);
   });
 
   it("scarta quello che non è un'estensione, invece di fidarsi", () => {
@@ -82,10 +82,12 @@ describe("le estensioni configurate in più", () => {
     expect(parseExtraExtensions(".")).toEqual([]);
   });
 
-  it("i documenti dei nostri prodotti valgono comunque, anche senza configurazione", () => {
+  it("i formati di casa valgono senza configurazione; quelli di un prodotto solo se configurati", () => {
     expect(isAllowedTicketAttachment("voci-da-fatturare.CSV")).toBe(true); // 31/08/2026
-    expect(isAllowedTicketAttachment("Sinfonia n.5.padmu")).toBe(true);
-    expect(isAllowedTicketAttachment("spartito.padmu2")).toBe(true);
+    // Il formato proprietario di un prodotto non è nella lista (10/10/2026):
+    // lo ammette chi lo configura dalla pagina Sistema, e solo lì.
+    expect(isAllowedTicketAttachment("pianta.dwg")).toBe(false);
+    expect(isAllowedTicketAttachment("modello.ifc", [".dwg", ".ifc"])).toBe(true);
   });
 
   it("e quelle configurate si aggiungono, senza toccare le altre", () => {

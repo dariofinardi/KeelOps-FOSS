@@ -24,12 +24,13 @@
  */
 
 /**
- * **La lista si allunga senza un rilascio.** I formati di casa cambiano con i
- * prodotti — `.padmu` e `.padmu2` sono i documenti di PadMu, e un cliente che
- * segnala un difetto allega il documento che lo mostra — e ogni volta serviva
+ * **La lista si allunga senza un rilascio.** I formati di un'azienda cambiano
+ * con i suoi prodotti — chi segnala un difetto allega il documento che lo
+ * mostra, nel formato proprietario di quel prodotto — e ogni volta serviva
  * toccare questo file e pubblicare. Le estensioni **in più** si configurano
  * dalla pagina Sistema e arrivano qui come parametro: la lista di sotto resta
  * il minimo che vale comunque, anche a configurazione vuota o irraggiungibile.
+ * (Dal 10/10/2026 i formati dei prodotti di Jugaad stanno lì, non qui.)
  */
 
 /** Estensioni ammesse, minuscole e col punto. */
@@ -68,15 +69,11 @@ export const TICKET_ATTACHMENT_EXTENSIONS = [
   ".m4a",
   ".wav",
   ".ogg",
-  // Documenti dei nostri prodotti: chi segnala un difetto di PadMu allega il
-  // file che lo mostra, e mandarlo per email era il modo più lento di dirlo.
-  ".padmu",
-  ".padmu2",
 ] as const;
 
 /**
- * Normalizza quello che si scrive in configurazione: «padmu, .PADMU2  zip» →
- * `[".padmu", ".padmu2", ".zip"]`. Chi lo compila non deve ricordarsi il punto
+ * Normalizza quello che si scrive in configurazione: «dwg, .STEP  zip» →
+ * `[".dwg", ".step", ".zip"]`. Chi lo compila non deve ricordarsi il punto
  * né la minuscola.
  */
 export function parseExtraExtensions(value: string | null | undefined): string[] {
@@ -103,11 +100,11 @@ export function attachmentAccept(extra: readonly string[] = []): string {
 
 /**
  * Elenco leggibile per i messaggi all'utente. **Dev'essere vero**: dire "PDF,
- * ZIP, Word, immagini, video e audio" mentre un `.padmu` passa lascia un
+ * ZIP, Word, immagini, video e audio" mentre un `.dwg` passa lascia un
  * cliente a credere che non possa allegarlo, e a mandarlo per email.
  */
 export const TICKET_ATTACHMENT_LABEL =
-  "PDF, ZIP, Word, Excel, CSV, testo, immagini, video, audio e documenti PadMu";
+  "PDF, ZIP, Word, Excel, CSV, testo, immagini, video e audio";
 
 /** L'estensione del nome, in minuscolo e col punto (stringa vuota se non c'è). */
 export function extensionOf(filename: string): string {
@@ -147,7 +144,7 @@ export function firstRejectedAttachment(
 /**
  * L'elenco a parole per i messaggi. Le estensioni configurate si aggiungono in
  * coda com'è scritto: un cliente a cui si dice "PDF, ZIP, Word, immagini, video
- * e audio" mentre il suo `.padmu` viene rifiutato legge una bugia.
+ * e audio" mentre il suo `.dwg` viene rifiutato legge una bugia.
  */
 export function attachmentLabel(extra: readonly string[] = []): string {
   if (extra.length === 0) return TICKET_ATTACHMENT_LABEL;
@@ -202,6 +199,4 @@ export const TICKET_ATTACHMENT_MIME_TYPES: Record<
   ".m4a": "audio/mp4",
   ".wav": "audio/wav",
   ".ogg": "audio/ogg",
-  ".padmu": "application/octet-stream",
-  ".padmu2": "application/octet-stream",
 };
