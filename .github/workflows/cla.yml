@@ -1,6 +1,6 @@
 # Asks every contributor to sign the CLA (CLA.md) on their first pull request,
 # and records the signatures in signatures/cla.json on the `cla-signatures`
-# branch. Uses CLA Assistant Lite: check the latest version before enabling it.
+# branch. Uses CLA Assistant Lite (contributor-assistant/github-action).
 name: CLA
 
 on:

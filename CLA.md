@@ -1,6 +1,6 @@
 # KeelOps Contributor License Agreement
 
-Version 1.0 — DRAFT, to be reviewed by a lawyer before use.
+Version 1.0 — 10 October 2026.
 
 Thank you for contributing to KeelOps. This agreement makes clear what rights you
 give to Jugaad s.r.l. when you send a contribution, so that the project can keep
@@ -16,9 +16,10 @@ organisation must sign too (section 8).
 
 ## 1. Definitions
 
-- **"Jugaad"**: Jugaad s.r.l., Reggio Emilia, Italy, the maintainer and copyright
-  holder of KeelOps, and any entity that controls it, is controlled by it, or is
-  under common control with it.
+- **"Jugaad"**: Jugaad s.r.l., registered office in Via Generale Luigi Reverberi
+  30/A, 42027 Montecchio Emilia (RE), Italy, VAT IT02905570350, the maintainer
+  and copyright holder of KeelOps, and any entity that controls it, is controlled
+  by it, or is under common control with it.
 - **"You"**: the person or the organisation that signs this agreement and makes
   Contributions.
 - **"Contribution"**: any original work of authorship, including any changes or
@@ -123,5 +124,8 @@ request with the exact sentence:
 > I have read the CLA Document and I hereby sign the CLA
 
 Your GitHub username, the date and the pull request are recorded in the
-repository (`signatures/cla.json`). For an organisation, write to
-**keelops@jugaad.it** before contributing: we send the organisation form.
+repository (`signatures/cla.json`, on the `cla-signatures` branch), where they
+are public: this is how the project proves who signed. Jugaad processes this
+personal data as described at <https://keelops.it/privacy.html>. For an
+organisation, write to **keelops@jugaad.it** before contributing: we send the
+organisation form (`CLA-ORGANISATION.md`).
