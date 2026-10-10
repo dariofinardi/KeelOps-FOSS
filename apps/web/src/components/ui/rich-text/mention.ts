@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { Extension } from "@tiptap/react";
 import Suggestion, { type SuggestionOptions } from "@tiptap/suggestion";
 

@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { UserRole, type AuthProviders, type CurrentUser, type LoginInput } from "@kancrm/shared";
@@ -5,16 +8,43 @@ import { ApiError, api, onForbidden } from "@/lib/api";
 import { useToast } from "@/components/ui/toast";
 import { useTranslation } from "react-i18next";
 import { dimenticaLinguaScelta } from "@/lib/i18n";
+import { edizioneDellaBuild } from "@/edition/rotte";
 
 /**
  * Provider disponibili (SSO Google, selettore Drive). Letto senza sessione: la
  * pagina di login lo usa per mostrare il pulsante Google, gli allegati per il
  * selettore Drive. Non cambia a runtime → si tiene in cache a lungo.
  */
+/**
+ * **The web build and the server must be the same edition** (10/10/2026). The
+ * server decides at run time (KEELOPS_EDITION, or the stubs of the community
+ * tree); the web decided when it was built. They never diverge in a normal
+ * install — the server serves its own build — but a commercial build pointed at
+ * a community server would offer tickets and timesheet extras to routes that
+ * answer 404. Said once, loudly, in the console: the page keeps working.
+ */
+let edizioneControllata = false;
+export function controllaEdizione(delServer: "community" | "commerciale"): boolean {
+  const dellaBuild = edizioneDellaBuild();
+  const coerente = delServer === dellaBuild;
+  if (!coerente && !edizioneControllata) {
+    console.error(
+      `[KeelOps] edizione del server «${delServer}», build web «${dellaBuild}»: ` +
+        "le due devono coincidere (ricostruire il web dallo stesso albero del server).",
+    );
+  }
+  edizioneControllata = true;
+  return coerente;
+}
+
 export function useProviders() {
   return useQuery({
     queryKey: ["auth-providers"],
-    queryFn: () => api<AuthProviders>("/api/auth/providers"),
+    queryFn: async () => {
+      const providers = await api<AuthProviders>("/api/auth/providers");
+      controllaEdizione(providers.edizione);
+      return providers;
+    },
     staleTime: Infinity,
     retry: false,
   });

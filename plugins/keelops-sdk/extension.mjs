@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * The plugins' EXTENSION store: a DuckDB file of the plugin's own, inside its
  * data dir, for what does not belong in the KeelOps database — analytical

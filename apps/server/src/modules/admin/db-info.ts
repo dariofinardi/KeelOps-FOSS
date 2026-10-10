@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { stat } from "node:fs/promises";
 import { databasePath, motore, prisma } from "../../db";
 import { dimensioneDatabaseSql, doveViveIlDatabase, versioneMotore } from "../../lib/dialetto";

@@ -1,4 +1,5 @@
 // Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
 
 /*
  * Which logged actions count as work on a task. Shared by the task picker of the

@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * The map graph: text themes, hierarchy edges, variable time windows, co-work
  * and parenthood suggestions.

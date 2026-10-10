@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import { catalogs } from "@/locales";

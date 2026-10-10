@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * Filtro "range di scadenza" delle liste task (7/15/30/60 giorni, tutte).
  *

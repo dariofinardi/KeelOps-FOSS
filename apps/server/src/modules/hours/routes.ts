@@ -1,4 +1,5 @@
 // Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
 
 /*
  * The timesheet grid: the core part, in every edition (08/10/2026). The grid of

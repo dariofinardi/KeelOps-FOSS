@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * The plugins' HTTP engine: a route table, one dispatcher, and two ways to
  * serve it — inside the core (side-loaded, the production mode) or as a

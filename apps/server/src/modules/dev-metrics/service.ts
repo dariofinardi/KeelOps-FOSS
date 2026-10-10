@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { ActivityCategory, EXTERNAL_ROLES, UserRole, type DevMetrics } from "@kancrm/shared";
 import type { User } from "../../generated/prisma/client";
 import { prisma } from "../../db";

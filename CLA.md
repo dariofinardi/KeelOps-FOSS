@@ -124,4 +124,4 @@ request with the exact sentence:
 
 Your GitHub username, the date and the pull request are recorded in the
 repository (`signatures/cla.json`). For an organisation, write to
-**[contact address to be defined]** before contributing: we send the organisation form.
+**keelops@jugaad.it** before contributing: we send the organisation form.

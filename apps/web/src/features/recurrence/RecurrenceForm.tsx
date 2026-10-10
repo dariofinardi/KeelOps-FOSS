@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { useRef, useState, type FormEvent } from "react";
 import { Combobox } from "@/components/ui/combobox";
 import { todayISO } from "@/features/tasks/task-utils";

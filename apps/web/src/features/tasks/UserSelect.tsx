@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { useTranslation } from "react-i18next";
 import { ProjectRole, type UserRef } from "@kancrm/shared";
 import { Combobox } from "@/components/ui/combobox";

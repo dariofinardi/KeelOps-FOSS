@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { useCallback } from "react";
 import type { Editor } from "@tiptap/react";
 import { ApiError, apiUpload } from "@/lib/api";

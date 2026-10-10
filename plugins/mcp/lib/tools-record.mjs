@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * The record-level tools (05/09/2026): everything an assistant may need to
  * READ about one thing — a task in full, its attachments (with the file

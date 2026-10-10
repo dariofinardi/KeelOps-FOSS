@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * KeelOps user recognition from the session cookie — for STANDALONE mode
  * (development and self-tests). Side-loaded in the core, the core's real

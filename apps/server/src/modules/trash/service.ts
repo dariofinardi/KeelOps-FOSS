@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { config } from "../../config";
 import { prismaRaw } from "../../db";
 import { badRequest, notFound } from "../../lib/http-errors";

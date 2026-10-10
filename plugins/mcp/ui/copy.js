@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Copy button for the instructions page. External file on purpose: the core
 // CSP blocks inline scripts and inline handlers; same-origin files are fine.
 document.addEventListener("DOMContentLoaded", () => {

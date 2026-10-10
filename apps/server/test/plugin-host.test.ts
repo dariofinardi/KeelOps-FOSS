@@ -1,4 +1,7 @@
-import { mkdirSync, writeFileSync, rmSync, existsSync, readFileSync } from "node:fs";
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
+import { mkdirSync, writeFileSync, rmSync, existsSync } from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { spawn, type ChildProcess } from "node:child_process";
@@ -19,15 +22,12 @@ const { dbPath } = prepareTestDb("plugin-host");
 const pluginsDir = path.join(os.tmpdir(), `kancrm-plugin-host-${process.pid}`);
 const serverDir = path.resolve(import.meta.dirname, "..");
 /**
- * The edition of the spawned server, decided as the server decides it
- * (`edizioneInVigore`): the community when told so, or when the commercial
- * module list is the empty stub of the exported tree — there KEELOPS_EDITION
- * is usually not set at all (the GitHub CI does not set it).
+ * The edition of the spawned server, as the server itself declares it in
+ * /api/auth/providers (read in beforeAll): the community when told so, or when
+ * the commercial module list is the empty stub of the exported tree — there
+ * KEELOPS_EDITION is usually not set at all (the GitHub CI does not set it).
  */
-const senzaModuliCommerciali = /MODULI_COMMERCIALI[^=]*=\s*\[\s*\]/.test(
-  readFileSync(path.join(serverDir, "src", "commercial", "index.ts"), "utf8"),
-);
-const community = process.env.KEELOPS_EDITION === "community" || senzaModuliCommerciali;
+let community = false;
 mkdirSync(path.join(pluginsDir, "eco", "ui"), { recursive: true });
 writeFileSync(
   path.join(pluginsDir, "eco", "ui", "index.html"),
@@ -284,6 +284,11 @@ beforeAll(async () => {
       throw new Error(`il server di prova non è partito. stderr:\n${stderrTail}`);
     await new Promise((ok) => setTimeout(ok, 400));
   }
+  // The edition, from the server itself: the expectations below follow it.
+  const providers = (await (await fetch(`${base}/api/auth/providers`)).json()) as {
+    edizione: "community" | "commerciale";
+  };
+  community = providers.edizione === "community";
   // l'utente e la sua sessione, scritti come li scrive il core (impronta sha256)
   const { default: Database } = await import("better-sqlite3");
   const db = new Database(dbPath);

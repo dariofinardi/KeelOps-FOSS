@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * **La ricerca nel lettore PDF**, senza DOM e senza pdf.js: testo in entrata,
  * posizioni in uscita (24/09/2026).

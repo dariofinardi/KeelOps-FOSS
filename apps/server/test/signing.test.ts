@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { describe, expect, it } from "vitest";
 import { sign, safeEqual } from "../src/lib/signing";
 import { signDoneLink, verifyDoneLink } from "../src/modules/calendar/done-link";

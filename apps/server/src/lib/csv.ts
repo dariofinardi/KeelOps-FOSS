@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * Cella CSV sicura: raddoppia le virgolette e racchiude tra virgolette, MA
  * antepone anche un apostrofo ai valori che iniziano con `= + - @` (o TAB/CR).

@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { Component, type ReactNode } from "react";
 import i18n from "@/lib/i18n";
 import { FullPageError } from "@/components/ui/full-page-error";

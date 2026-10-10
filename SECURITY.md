@@ -3,7 +3,7 @@
 ## Reporting a vulnerability
 
 Please **do not open a public issue** for a security problem. Write to
-**[security contact address to be defined]** with:
+**keelops@jugaad.it** with:
 
 - what you found and where (file, route, version — the version is in the app's
   Help page and in `packages/shared/src/version.ts`);

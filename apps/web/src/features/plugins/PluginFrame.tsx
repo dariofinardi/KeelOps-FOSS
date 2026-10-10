@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { useParams } from "react-router-dom";
 import { useDocumentTitle } from "@/lib/use-document-title";
 import { usePlugins } from "./usePlugins";

@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * Le traduzioni della pagina. L'italiano è la chiave, come nel core; la lingua
  * la si legge dove il core la salva (`kancrm-lang`, la stessa origine → lo

@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import type { ActivityTypeRef, ProjectListItem, TagRef, TaskStatus, UserRef } from "@kancrm/shared";
 import { useCurrentUser } from "@/features/auth/useAuth";
 import { useProjects } from "@/features/projects/useProjects";

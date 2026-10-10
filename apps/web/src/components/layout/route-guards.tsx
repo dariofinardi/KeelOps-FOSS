@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import type { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
 import { UserRole } from "@kancrm/shared";

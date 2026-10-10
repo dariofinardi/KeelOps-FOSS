@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * The STANDALONE mode of the MCP plugin: useful in development and in the
  * self-tests. In production the plugin is side-loaded into the core (see

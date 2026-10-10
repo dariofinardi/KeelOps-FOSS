@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Base enums shared between server and web. Kept as const objects (not TS enums)
 // so they stay erasable and usable as zod enums.
 

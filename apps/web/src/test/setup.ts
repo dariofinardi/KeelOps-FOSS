@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Setup dei test frontend: matcher DOM di jest-dom + pulizia del DOM dopo ogni test.
 import "@testing-library/jest-dom/vitest";
 import { afterEach, beforeEach } from "vitest";

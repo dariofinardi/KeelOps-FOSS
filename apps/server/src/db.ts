@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import path from "node:path";
 import type { PrismaClient as PrismaClientSqlite } from "./generated/prisma/client";
 import { PrismaBetterSQLite3 } from "@prisma/adapter-better-sqlite3";

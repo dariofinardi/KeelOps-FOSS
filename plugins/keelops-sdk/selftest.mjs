@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * Self-test of the SDK database abstraction: the SQLite driver behaves, a
  * borrowed connection behaves the same way from the outside, the scheme

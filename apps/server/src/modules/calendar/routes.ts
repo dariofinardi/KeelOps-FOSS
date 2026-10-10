@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import type { FastifyInstance, FastifyReply } from "fastify";
 import { TaskKind, escapeHtml } from "@kancrm/shared";
 import { prisma } from "../../db";

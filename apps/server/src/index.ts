@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import cron from "node-cron";
 import { purgePendingInlineImages } from "./modules/rich-text/inline-images";
 import { buildApp } from "./app";

@@ -40,6 +40,18 @@ If you contribute for a company, the company signs too (see `CLA.md`, section 8,
 - Commit messages in English: `feat:`, `fix:`, `chore:`, `refactor:`, `docs:`,
   with a body that explains why.
 
+## How a pull request lands
+
+This repository is the **published copy** of the community edition: KeelOps is
+developed in one place, together with the commercial modules, and the community
+tree is generated from it. So a pull request here is reviewed here, and once
+accepted it is applied to the source repository **with you as the author** and
+comes back in the next publication, usually within days. The commit you see on
+`main` will say "Generated from the KeelOps repository": your name stays in the
+commit's author field and in the pull request. It also means `main` moves in
+bigger steps than one merge at a time; rebase on it before you open a pull
+request.
+
 ## Reporting a security problem
 
 Do not open a public issue: see `SECURITY.md`.

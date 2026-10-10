@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { z } from "zod";
 import { ActivityCategory } from "../enums";
 import { UserRole } from "../enums";
@@ -122,6 +125,13 @@ export type CurrentUser = z.infer<typeof currentUserSchema>;
  * referrer sulla console Google): mai segreti qui.
  */
 export const authProvidersSchema = z.object({
+  /**
+   * The edition the server runs (10/10/2026). The web build has its own, decided
+   * when it was built: the two must agree, and the web checks it here. A
+   * commercial build served by a community server would show buttons to routes
+   * that do not exist.
+   */
+  edizione: z.enum(["community", "commerciale"]),
   /** Le vie self-service via email: esistono solo se il mailer è configurato. */
   email: z.object({ passwordReset: z.boolean(), otp: z.boolean() }),
   google: z.object({

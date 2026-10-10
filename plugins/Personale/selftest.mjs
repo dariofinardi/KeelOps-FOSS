@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * Live self-test of the Personale plugin, against a COPY of the database
  * (never the original: it creates fake sessions and writes boards).

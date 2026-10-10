@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * The KeelOps look for plugin pages: one place for tokens, the card shell,
  * the system font stack and the app's lucide glyphs. Server-rendered pages

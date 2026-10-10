@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { useTranslation } from "react-i18next";
 import { BadgeCheck, CalendarClock, FolderKanban, HandCoins, LayoutGrid } from "lucide-react";
 import { ACTIVITY_CATEGORY_LABELS, ActivityCategory } from "@kancrm/shared";

@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { describe, expect, it, vi } from "vitest";
 import { richTextToPlain } from "@kancrm/shared";
 import { fireEvent, render as renderRaw, screen } from "@testing-library/react";

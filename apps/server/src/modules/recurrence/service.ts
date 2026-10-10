@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { TaskKind, type ActivityCategory } from "@kancrm/shared";
 import { parseDateOnly, startOfTodayUTC } from "../../lib/date";
 import { prisma, prismaRaw } from "../../db";

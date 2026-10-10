@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /** Il glifo di Word (deriva dall'analisi fatta per MikeRust), inline come quello di Drive: una pagina blu con la «W», nessun asset esterno (CSP). */
 export function WordGlyph({ className = "size-4" }: { className?: string }) {
   return (

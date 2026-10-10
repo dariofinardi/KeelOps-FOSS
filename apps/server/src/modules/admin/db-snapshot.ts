@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { gzipSync } from "node:zlib";
 import { execFile } from "node:child_process";
 import { readFile, mkdtemp, rm, readFile as read } from "node:fs/promises";

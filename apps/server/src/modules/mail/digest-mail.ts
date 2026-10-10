@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { serverT } from "../../i18n";
 import type { BrandingLogo } from "../branding/logo";
 import type { MailMessage } from "./types";

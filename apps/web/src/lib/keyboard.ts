@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * Le scorciatoie a lettera singola valgono **solo quando non si sta scrivendo**.
  *

@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { mkdirSync, writeFileSync, rmSync, readFileSync, existsSync } from "node:fs";
 import path from "node:path";
 import os from "node:os";

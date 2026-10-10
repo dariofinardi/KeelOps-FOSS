@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * Accende o spegne la manutenzione SENZA passare dall'API: serve al deploy,
  * che deve poterlo fare anche mentre il servizio è fermo o sta riavviando.

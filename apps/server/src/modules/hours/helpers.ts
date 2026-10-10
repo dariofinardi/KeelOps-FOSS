@@ -1,4 +1,5 @@
 // Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
 
 /*
  * Helpers of the timesheet grid, shared by the core routes (hours/routes.ts)

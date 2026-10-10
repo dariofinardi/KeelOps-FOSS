@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import type { ComponentType } from "react";
 import { Bot, Columns3, Puzzle, Share2, type LucideIcon } from "lucide-react";
 import type { PluginUiEntry } from "@kancrm/shared";

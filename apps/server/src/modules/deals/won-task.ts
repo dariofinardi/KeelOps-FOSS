@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * **L'automazione dell'offerta vinta**, in un modulo suo perché la chiamano in
  * due: la rotta che sposta l'offerta in fase vinta quando il modello è spento,

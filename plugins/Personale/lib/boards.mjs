@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * Boards and their columns — the rules the core had in `modules/boards/service.ts`,
  * ported one by one (each has its case in selftest.mjs):

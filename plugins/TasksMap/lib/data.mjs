@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /** The map reads: projects, a project's tasks, task detail, co-work. */
 import { stripHtml } from "../../keelops-sdk/text.mjs";
 import { taskPerimeter, projectPerimeter } from "../../keelops-sdk/perimeter.mjs";

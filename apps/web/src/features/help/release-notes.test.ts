@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { describe, expect, it } from "vitest";
 import { APP_VERSION } from "@kancrm/shared";
 import { PRIMA_VERSIONE_COMMUNITY, RELEASE_NOTES, testoDellaVoce } from "./release-notes";

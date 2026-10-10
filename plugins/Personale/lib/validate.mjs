@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * Input validation, the same rules the core enforced with zod in
  * `packages/shared/src/schemas/boards.ts` — written out here because a plugin

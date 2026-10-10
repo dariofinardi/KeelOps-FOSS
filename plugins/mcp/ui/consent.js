@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Consent form guard: one submission only. The pending request is single-use,
 // so a double click must not burn it and then show "request expired".
 "use strict";

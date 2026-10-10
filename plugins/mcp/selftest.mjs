@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * Live self-test of the MCP plugin: the full OAuth dance (dynamic
  * registration, consent with the KeelOps session, PKCE, code exchange,

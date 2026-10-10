@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
@@ -27,7 +30,7 @@ import {
   toCurrentUser,
 } from "../../plugins/auth";
 import { canElevate, effectiveUser, elevationExpiry } from "./elevation";
-import { haModulo, moduliAttivi } from "../../edition/registry";
+import { edizioneInVigore, haModulo, moduliAttivi } from "../../edition/registry";
 import { canSeeDevMetrics } from "../dev-metrics/service";
 import {
   accessForScope,
@@ -332,6 +335,7 @@ export function authRoutes(app: FastifyInstance): void {
     // Google is the commercial `google` module: without it, nothing to offer.
     const google = haModulo("google");
     return {
+      edizione: edizioneInVigore(),
       // le vie self-service via email esistono solo se il mailer è configurato
       email: { passwordReset: config.mail.enabled, otp: config.mail.enabled },
       google: {

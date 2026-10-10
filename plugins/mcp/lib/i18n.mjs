@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * Tiny translation table for the plugin's user-facing pages (instructions and
  * consent). Italian is the key, like everywhere else in the product; unknown

@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // UI translations. Italian is the key, like everywhere in the product; the
 // locale comes from the user's KeelOps preference (via the API responses),
 // with the browser language as the first guess. No dependencies, on purpose.

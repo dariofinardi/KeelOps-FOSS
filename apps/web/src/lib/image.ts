@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * Ridimensiona un'immagine lato client prima dell'upload, così avatar e logo non
  * vengono salvati a risoluzione piena. Riduce solo (mai ingrandisce), rispetta

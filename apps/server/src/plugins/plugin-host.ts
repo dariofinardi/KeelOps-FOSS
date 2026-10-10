@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import path from "node:path";
 import { existsSync, mkdirSync, readdirSync, readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";

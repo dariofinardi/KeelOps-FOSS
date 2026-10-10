@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // rrule è un bundle CommonJS: sotto Node ESM i named export non vengono rilevati,
 // quindi si importa il default sintetico (esModuleInterop) e si destruttura.
 import rrulePkg from "rrule";

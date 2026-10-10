@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { expect, type Page } from "@playwright/test";
 
 export async function login(page: Page, email = "admin@kancrm.local", password = "admin1234") {

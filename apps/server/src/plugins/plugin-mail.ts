@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { escapeHtml } from "@kancrm/shared";
 import { config } from "../config";
 import { prisma } from "../db";

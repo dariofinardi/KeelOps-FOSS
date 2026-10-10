@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { describe, expect, it } from "vitest";
 // Il modulo è JavaScript puro dell'SDK: le firme stanno in support/keelops-sdk.d.ts.
 import {

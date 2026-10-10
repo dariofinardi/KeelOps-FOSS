@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { z } from "zod";
 import { MAX_HOURS_PER_DAY, roundHours } from "../hours";
 import { weekStartOf } from "../timesheet-period";

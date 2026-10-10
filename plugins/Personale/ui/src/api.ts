@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * Le chiamate alla parte server del plugin (`../api/…`, relative: la pagina
  * vive sotto `/plugins/Personale/`) e, per una cosa sola, al core: l'ordine

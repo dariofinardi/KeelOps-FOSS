@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /** Parser CSV minimale: gestisce campi quotati, virgole/punti e virgola, CRLF. */
 export function parseCsv(text: string): string[][] {
   const firstLine = text.slice(0, text.indexOf("\n"));

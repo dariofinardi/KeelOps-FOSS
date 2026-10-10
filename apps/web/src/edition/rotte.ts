@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import type { ComponentType, ReactNode } from "react";
 import { EDIZIONE_COMMERCIALE } from "./commercial/rotte";
 
@@ -20,3 +23,7 @@ export interface EdizioneWeb {
 }
 
 export const edizione: EdizioneWeb = EDIZIONE_COMMERCIALE;
+
+/** The edition this web build was made for: commercial if it carries any module. */
+export const edizioneDellaBuild = (): "community" | "commerciale" =>
+  edizione.moduli.size > 0 ? "commerciale" : "community";

@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * Fotografia di un record all'apertura di un pannello, per poterlo riportare
  * com'era alla chiusura.

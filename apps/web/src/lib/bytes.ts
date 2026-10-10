@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * Dimensione di un file leggibile: KB sotto il mega, MB sotto il giga, GB
  * sopra. Unico punto: la scriveva la pagina Sistema e la riscriveva l'elenco

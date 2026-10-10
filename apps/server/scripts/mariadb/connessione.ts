@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * L'indirizzo di MariaDB, composto dalle variabili che stanno nel `.env`
  * dell'installazione: `MARIA_DB_USER`, `MARIA_DB_PASS`, `MARIA_DB_NAME`, e

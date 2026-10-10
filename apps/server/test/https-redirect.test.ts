@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { rmSync } from "node:fs";
 import { afterAll, describe, expect, it, vi } from "vitest";
 import { hostWithoutPort, shouldRedirectToHttps } from "../src/lib/https-redirect";

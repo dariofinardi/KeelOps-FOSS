@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import type { FastifyError, FastifyInstance } from "fastify";
 import { ZodError } from "zod";
 import { Prisma } from "../generated/prisma/client";

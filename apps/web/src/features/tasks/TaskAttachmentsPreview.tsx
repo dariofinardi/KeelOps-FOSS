@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { Download, ExternalLink, Eye, FileText, Link2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { viewableKind } from "@kancrm/shared";

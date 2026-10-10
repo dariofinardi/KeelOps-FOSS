@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { riprovaQuery } from "./lib/query-retry";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";

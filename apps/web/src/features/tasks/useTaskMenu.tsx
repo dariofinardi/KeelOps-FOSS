@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { CheckCircle2, Copy, RotateCcw, SquarePen, Trash2, UserCheck } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { statusCategoryOf, TaskKind, type TaskListItem } from "@kancrm/shared";

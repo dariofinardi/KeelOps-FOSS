@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * Chi "lavora il CRM": l'anagrafica clienti si modifica, si elimina e si annota
  * solo da qui. Predicato puro, condiviso: il server lo usa per autorizzare, il

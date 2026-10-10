@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Service worker KanCRM: riceve le notifiche Web Push e le mostra.
 self.addEventListener("push", (event) => {
   let data = { title: "KanCRM", body: "" };

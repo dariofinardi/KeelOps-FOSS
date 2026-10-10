@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * Self-contained OAuth 2.1 for the MCP server: dynamic client registration
  * (RFC 7591), authorization code with mandatory PKCE S256, rotating refresh

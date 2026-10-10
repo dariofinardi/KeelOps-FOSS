@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * **Le parole chiave della chat**: comandi che si scrivono nel messaggio e che
  * non fanno parte del messaggio.

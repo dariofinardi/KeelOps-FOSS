@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { api, ApiError } from "./api";
 import { formatDate, t } from "./i18n";

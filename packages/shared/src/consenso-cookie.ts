@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * **La scelta sui cookie, una sola per keelops.it e per la demo** (18/09/2026).
  *

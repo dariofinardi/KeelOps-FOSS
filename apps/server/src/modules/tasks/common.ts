@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { NotificationType, TaskKind } from "@kancrm/shared";
 import { prisma } from "../../db";
 import { badRequest, notFound } from "../../lib/http-errors";

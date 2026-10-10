@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { noteRecordChanged } from "../realtime/record-changes";
 
 // Tipo strutturale: accetta sia la transazione del client esteso (soft delete)

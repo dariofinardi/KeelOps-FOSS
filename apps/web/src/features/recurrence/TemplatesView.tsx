@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { useState } from "react";
 import { useListPrefs } from "@/lib/useListPrefs";
 import { FilterSelect } from "@/components/ui/filter-select";

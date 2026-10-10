@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * The vectors of the tasks, one per task, kept in `plugin_tasksmap_vettore`.
  *

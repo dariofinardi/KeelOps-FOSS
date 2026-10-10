@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { TaskKind, type VisibilityAccess } from "@kancrm/shared";
 import type { Prisma, User } from "../../generated/prisma/client";
 import { moduliAttivi } from "../../edition/registry";

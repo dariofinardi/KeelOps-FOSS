@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { createHash, randomBytes, randomInt } from "node:crypto";
 import { prisma } from "../../db";
 import type { User } from "../../generated/prisma/client";

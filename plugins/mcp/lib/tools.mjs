@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * The KeelOps MCP tools, all READ-only and all inside the authenticated
  * user's perimeter: the token belongs to a person, and the person sees only

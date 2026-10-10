@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * **L'ordine in cui si travasano le tabelle**: prima chi non dipende da
  * nessuno, poi chi ci si appoggia. Non è indispensabile — durante la copia i

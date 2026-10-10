@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * **Quanto manca al database per assomigliare allo schema.** Una domanda sola,
  * chiesta a Prisma, che serve in due posti: prima di generare una migrazione

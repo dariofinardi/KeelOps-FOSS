@@ -204,6 +204,9 @@ Contributions are welcome under a Contributor License Agreement
 your work, your contribution stays available under the AGPL, and Jugaad may also
 use it in the commercial edition.
 
+Every source file carries the licence in its first lines
+(`SPDX-License-Identifier: AGPL-3.0-only`).
+
 "KeelOps" and its logo are trademarks of Jugaad s.r.l.
 
 ## What the community edition does not include
@@ -223,7 +226,10 @@ or hosted by us):
 | **Plugins**          | MCP connector pro (statistics, ticket data), Presenze (attendance), Rapportini (field work reports), QuoteDOCX (quotes in Word), QABox                                                |
 
 The database is the same in both editions: you can move from one to the other
-without migrating data. Moving data from ClickUp, Monday or Jira, and plugins made
+without migrating data. One thing to know when moving from commercial to
+community: people who signed in with Google have no password, so an
+administrator sets one for them (Users page, or
+`scripts/utenti.ts reset <email>`). Moving data from ClickUp, Monday or Jira, and plugins made
 for your company, are available as a professional service: see
 [keelops.it](https://keelops.it) or write to [Jugaad](https://jugaad.digital).
 

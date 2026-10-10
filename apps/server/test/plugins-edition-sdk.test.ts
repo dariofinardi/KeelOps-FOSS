@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { describe, expect, it } from "vitest";
 // @ts-expect-error — modulo .mjs dell'SDK, senza tipi
 import { taskPerimeter } from "../../../plugins/keelops-sdk/perimeter.mjs";

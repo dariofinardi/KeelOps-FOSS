@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * The plugin's line in the core's morning digest (contract: `riepilogoMattutino`
  * in what `create()` returns, see plugins/README.md). The core asks once a

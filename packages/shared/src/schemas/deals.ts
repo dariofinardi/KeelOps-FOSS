@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { z } from "zod";
 import { MOTIVI_OFFERTA_FERMA, type FiltroOfferteFerme } from "../deal-next-step";
 import { dealStageSchema } from "./deal-stages";

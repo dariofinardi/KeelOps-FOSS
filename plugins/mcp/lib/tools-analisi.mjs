@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * The ANALYSIS tools: aggregated, analysis-ready readings of every kind of
  * data KeelOps collects — tasks, projects, support requests, hours, customers —

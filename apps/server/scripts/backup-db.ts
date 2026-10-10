@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * Il backup del database, da riga di comando — per `deploy.sh` e per chiunque
  * ne voglia uno prima di toccare qualcosa.

@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import type { FastifyInstance } from "fastify";
 import { forbidden } from "../../lib/http-errors";
 import { requireUser } from "../../plugins/auth";

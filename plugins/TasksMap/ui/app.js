@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // TasksMap UI. External file on purpose: the core CSP allows same-origin
 // scripts ('self') and blocks inline ones - no CSP weakening needed.
 "use strict";

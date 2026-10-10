@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * The side-loaded entry point of the MCP plugin: the core (plugin-host) calls
  * `create(ctx)` and gets the routes; authentication and database come from

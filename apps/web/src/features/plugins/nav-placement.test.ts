@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { describe, expect, it } from "vitest";
 import { NAV_AREA_KEYS, type PluginUiEntry } from "@kancrm/shared";
 import { AREAS } from "@/components/layout/areas";

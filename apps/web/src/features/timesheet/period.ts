@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { periodDays, periodKind } from "@kancrm/shared";
 import { todayISO } from "@/features/tasks/task-utils";
 

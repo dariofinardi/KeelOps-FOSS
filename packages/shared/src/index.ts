@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 export * from "./enums";
 export * from "./task-kind-fields";
 export * from "./version";

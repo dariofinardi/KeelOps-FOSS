@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import type { FastifyInstance } from "fastify";
 import { TaskKind, UserRole, VisibilityScope, type SearchResult } from "@kancrm/shared";
 import { z } from "zod";

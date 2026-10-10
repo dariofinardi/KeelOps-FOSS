@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { NotificationType, UserRole, type TaskKind } from "@kancrm/shared";
 import { destinoEmail } from "./email-queue";
 import { emailPuoPartire } from "./weekend";

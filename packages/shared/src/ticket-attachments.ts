@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * Che cosa si può allegare a una **richiesta di supporto**: PDF, archivi ZIP,
  * documenti Word, immagini e — dal 18/08/2026 — **video e audio**: la

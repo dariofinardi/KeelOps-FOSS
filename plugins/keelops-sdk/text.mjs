@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /** Text utilities shared by the plugins. */
 
 /** Descriptions are rich text (HTML): outside panels, only plain text goes out. */

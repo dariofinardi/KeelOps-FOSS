@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { useEffect } from "react";
 import { useCurrentUser } from "@/features/auth/useAuth";
 import { useBranding } from "./useBranding";

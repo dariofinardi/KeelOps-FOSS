@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { dealForecastDate, dealMonthKey, SENZA_DATA, weekStartOf } from "@kancrm/shared";
 import { forecastAmount, forecastWeight, isInForecastTotal, type ForecastDeal } from "./forecast";
 

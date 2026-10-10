@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * **Prepara MariaDB**: crea (o aggiorna) le tabelle applicando le migrazioni di
  * `prisma/mariadb`.

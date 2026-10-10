@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * Il marchio KeelOps, inline e in un punto solo: gli SVG usano `currentColor`,
  * quindi ereditano il colore del testo e vivono da soli nei due temi.

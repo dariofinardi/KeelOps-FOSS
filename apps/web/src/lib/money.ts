@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Formattazione valuta basata sulla preferenza dell'utente corrente. Niente stato
 // globale mutabile: il codice valuta viene dal CurrentUserContext via useMoney().
 import { useMemo } from "react";

@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { describe, expect, it } from "vitest";
 import { copyNumber, nextCopyTitle, stripCopySuffix } from "../src/modules/tasks/duplicate";
 

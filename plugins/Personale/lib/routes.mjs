@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * The routes, independent of HOW the plugin is served: the core uses them when
  * the plugin is side-loaded, `server.mjs` in standalone mode. Same shapes as

@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { lazy, type ComponentType } from "react";
 
 // Ogni pagina è un chunk a sé (code-splitting per route): il bundle iniziale porta

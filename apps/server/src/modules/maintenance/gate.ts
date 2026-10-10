@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import type { FastifyInstance } from "fastify";
 import { UserRole } from "@kancrm/shared";
 import { SESSION_COOKIE, findSessionUser } from "../auth/session";

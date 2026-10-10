@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * Il **periodo** del timesheet: un mese (`2026-08`) o una settimana
  * (`2026-08-03`, il lunedì che la apre).

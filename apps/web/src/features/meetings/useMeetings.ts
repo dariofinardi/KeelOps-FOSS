@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { MeetingListItem, MeetingMinutes } from "@kancrm/shared";

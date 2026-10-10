@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useDocumentTitle } from "@/lib/use-document-title";
 import { LinkedTaskLayer } from "@/features/tasks/LinkedTaskLayer";

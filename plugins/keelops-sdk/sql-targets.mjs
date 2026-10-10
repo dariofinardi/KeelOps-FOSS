@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * Which tables a statement WRITES — the one question the plugin database layer
  * has to answer before it lets a write through.

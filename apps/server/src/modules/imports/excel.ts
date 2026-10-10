@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import ExcelJS from "exceljs";
 import type { ImportType } from "@kancrm/shared";
 import { intestazioniDeiDialetti, rigaDaScartare } from "./dialects-core";

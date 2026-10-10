@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { mkdtempSync } from "node:fs";
 import { readFileSync, readdirSync } from "node:fs";
 import { tmpdir } from "node:os";

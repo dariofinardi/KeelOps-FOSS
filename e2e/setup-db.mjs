@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 // Prepara il database E2E (migrazioni + seed) PRIMA di avviare il server.
 // Eseguito dal comando webServer di Playwright (vedi playwright.config.ts).
 import { execSync } from "node:child_process";

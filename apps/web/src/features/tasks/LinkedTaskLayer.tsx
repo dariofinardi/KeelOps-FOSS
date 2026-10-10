@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { useState, type ReactNode } from "react";
 import { TaskKind } from "@kancrm/shared";
 import { slot } from "@/edition/slots";

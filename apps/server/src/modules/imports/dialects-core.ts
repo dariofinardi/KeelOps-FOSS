@@ -1,4 +1,5 @@
 // Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
 
 import type { ParsedRow } from "./excel";
 import { dialettiImport, type RigaLetta, type RuoloRiga, type StatusMeaning } from "./dialects";

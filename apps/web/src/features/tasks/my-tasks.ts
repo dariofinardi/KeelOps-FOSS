@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * Quando un task è "mio": me ne occupo come **assegnatario** o come **supervisore**.
  *

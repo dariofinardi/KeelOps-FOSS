@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Jugaad s.r.l.
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /** Le forme che le API del plugin restituiscono: le stesse di `schemas/boards.ts` del core. */
 export interface BoardStatus {
   id: string;
