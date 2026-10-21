@@ -1004,6 +1004,12 @@ export function ActivitySection({
             <li key={activity.id} className={cn("relative text-xs text-muted-foreground")}>
               <span className="absolute -left-[21px] top-1 size-2 rounded-full bg-border" />
               <span className="font-medium text-foreground">{activity.user.name}</span>{" "}
+              {/* Scritta da un plugin a nome della persona: «via MCP» (21/10/2026). */}
+              {activity.via && (
+                <span className="font-medium text-foreground">
+                  {t("via {{canale}}", { canale: activity.via })}{" "}
+                </span>
+              )}
               {label ? t(label) : activity.action}
               {detail && <span className="text-foreground"> — {detail}</span>}
               <span className="ml-1">· {formatDateTime(activity.createdAt)}</span>

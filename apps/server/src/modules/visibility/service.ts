@@ -13,6 +13,7 @@ import { prisma } from "../../db";
 import { forbidden } from "../../lib/http-errors";
 import { cached } from "../../lib/request-context";
 import type { User } from "../../generated/prisma/client";
+import { funzioneAttiva, scopeAttivo } from "../../edition/funzioni-stato";
 
 /**
  * Può vedere i timesheet di più persone (non solo il proprio): admin, chi ha il
@@ -71,11 +72,17 @@ export async function canSeeScope(user: User, scope: VisibilityScope): Promise<b
  * Memoizzato per-richiesta (vedi request-context): `assertTaskViewAccess` lo
  * richiama in cicli e `/api/auth/me` per 4 scope — senza cache erano 2 query a
  * ogni invocazione.
+ *
+ * **Con la funzione dell'area spenta lo scope non vale per nessuno**,
+ * amministratore compreso (17/10/2026): l'area non esiste in questa
+ * installazione. È il passaggio obbligato di ogni controllo d'area, quindi
+ * basta dirlo qui. Vedi `plan/funzioni-istanza.md`.
  */
 export async function accessForScope(
   user: User,
   scope: VisibilityScope,
 ): Promise<VisibilityAccess | null> {
+  if (!scopeAttivo(scope)) return null;
   if (user.role === UserRole.ADMIN) return VisibilityAccess.FULL;
   return cached(`access:${user.id}:${scope}`, async () => {
     const allowed = await prisma.visibilitySetting.findMany({ where: { scope } });
@@ -107,6 +114,7 @@ export async function accessForScope(
  * loro aree e non passano di qui.
  */
 export async function hasDealsDaysLens(user: User): Promise<boolean> {
+  if (!funzioneAttiva("offerte")) return false;
   if (isExternalRole(user.role)) return false;
   if (user.role === UserRole.ADMIN) return false;
   return cached(`deals-days:${user.id}`, async () => {

@@ -49,6 +49,7 @@ falls back to the default and says so in the log, with the plugin's name.
 |---|---|---|
 | `nome` | string | **Name.** The plugin is mounted at `/plugins/<nome>/` and opened at `/estensioni/<nome>`. Letters, digits, `-` and `_`. |
 | `titolo` | string | **Title**, as people read it (the System page, the frame title). Defaults to `nome`. |
+| `canale` | string | **Channel**: how the plugin appears in the history of what it writes for a person ("Maria Rossi via MCP"). Defaults to `titolo`. |
 | `versione` | string | **Version** of the code, semantic (`0.3.0`). Written in the plugin's config table at every start. |
 | `montaCome` | string | **Mount as**: mount under another name. A pro edition takes the place of the free one without breaking clients already connected to its address (MCP-pro mounts as `mcp`). Two plugins cannot share a mount point: the second is refused. |
 | `descrizione` | string | A paragraph on what the plugin does, in Italian: the fallback for `sommario`. |
@@ -87,7 +88,7 @@ See [Data](04-data.md) for what a nick gives and what it costs.
 
 ## Permissions
 
-`permessi` lists what the plugin asks the core for. Four entries change what
+`permessi` lists what the plugin asks the core for. Seven entries change what
 the plugin receives; the others document intent (they appear in reviews and
 will gate doors as the SDK grows):
 
@@ -97,6 +98,9 @@ will gate doors as the SDK grows):
 | `plugins:strumenti` | `ctx.plugins.strumenti()` lists the **tools** other plugins offer. Without it, `ctx.plugins` is `null`. See [tools](07-core-doors.md#tools-shared-between-plugins). |
 | `timesheet:write` | `ctx.timesheet` adds hours to people's timesheets. Without it — or on a core without the `timesheet` function (community) — `ctx.timesheet` is `null`. See [timesheet](07-core-doors.md#timesheet). |
 | `mail:send` | `ctx.mail` sends email through the core's channel. Without it, `ctx.mail` is `null`. See [mail](07-core-doors.md#mail). |
+| `deals:write` | `ctx.offerte` creates and changes deals as the person. Without it, `ctx.offerte` is `null`. See [deals and contacts](07-core-doors.md#deals-and-contacts). |
+| `contacts:write` | `ctx.crm` finds or creates companies and creates and changes contacts. Without it, `ctx.crm` is `null`. |
+| `tasks:write` | `ctx.tasks.update` changes a task with the panel's rules. Without it, `ctx.tasks.update` is `null` (`create` and `read` are always there). |
 | `tasks:read`, `projects:read`, `deals:read`, `tickets:read`, `timesheet:read`, `attachments:read`, `contacts:read`, `groups:write` | declarative today. |
 
 ## In the interface: `ui`

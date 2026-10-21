@@ -49,6 +49,8 @@ export interface SlotEdizione {
     onClose: () => void;
     editable: boolean;
     layer?: "panel" | "over";
+    /** Da dove si è arrivati: «← Offerta …» accanto al titolo (lib/ritorno.ts). */
+    indietro?: { etichetta: string; onClick: () => void } | null;
   }>;
   /** Nel pannello del task: presa in carico e richiedente (hook, uguale a ogni render). */
   useRichiesta?: (task: TaskDetail) => RichiestaDelTask;

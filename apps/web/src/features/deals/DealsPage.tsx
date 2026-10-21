@@ -4,7 +4,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { PluginMenu } from "@/features/plugins/PluginMenu";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import {
   Glasses,
   Kanban,
@@ -73,6 +73,9 @@ import {
   includeClosedForView,
   type DealsViewMode,
 } from "./deals-view";
+import { moduloAcceso } from "@/lib/funzioni";
+import { useRitorno } from "@/lib/ritorno";
+import { TaskDetailDrawer } from "@/features/tasks/TaskDetailDrawer";
 
 type ViewMode = DealsViewMode;
 
@@ -103,6 +106,8 @@ interface DealsPrefs {
   stalled: "" | FiltroOfferteFerme;
   /** Mesi di chiusura (`2026-09`, `senza-data`); vuoto = tutti. Valgono in ogni vista. */
   months: string[];
+  /** Solo le offerte condivise con gli investitori; stringa vuota = tutte (21/10/2026). */
+  investors?: "" | "shared";
   sortBy?: DealSortBy;
   sortDir: SortDir;
 }
@@ -119,6 +124,7 @@ const DEFAULT_PREFS: DealsPrefs = {
   includeClosed: false,
   stalled: "",
   months: [],
+  investors: "",
   sortDir: "asc",
 };
 
@@ -196,6 +202,10 @@ export function DealsPage() {
   const { q, owner, stageId, companyId, value, includeClosed, stalled, sortBy, sortDir } = prefs;
   // Un preferito salvato prima del filtro non ha i mesi, uno vecchio può averne di storti.
   const months = parseDealMonths((prefs.months ?? []).join(","));
+  // Il filtro «per gli investitori» c'è con la loro area accesa, e non per chi vede
+  // le offerte in giornate; spenta l'area, un vecchio filtro salvato non taglia niente.
+  const conInvestitori = moduloAcceso(currentUser, "area-investitori") && !daysView;
+  const investors = conInvestitori ? (prefs.investors ?? "") : "";
   // Arrivo dai contatori di una scheda cliente: la lista si apre già filtrata.
   useUrlFilterHandoff(["cliente"], (values) => update({ companyId: values.cliente ?? "" }));
   const view: ViewMode = daysView ? "table" : prefs.view;
@@ -215,6 +225,11 @@ export function DealsPage() {
     if (dealParam && !daysView) setSelectedId(dealParam);
   }, [dealParam, daysView]);
 
+  // Arrivati qui da un progetto o da una scheda cliente: «← da dove» nel pannello.
+  const ritornoOfferta = useRitorno(selectedId);
+  const ritornoAlPannello = ritornoOfferta
+    ? { etichetta: ritornoOfferta.etichetta, onClick: ritornoOfferta.torna }
+    : null;
   const closeDeal = () => {
     setSelectedId(null);
     if (searchParams.has("deal")) {
@@ -248,6 +263,7 @@ export function DealsPage() {
     stalled: stalled || undefined,
     // I mesi tagliano tabella, kanban e previsione, e con loro i totali.
     months: months.length > 0 ? months.join(",") : undefined,
+    investors: investors || undefined,
     owner,
     includeClosed: includeClosedForView(view, includeClosed),
     page: isTable ? page : 1,
@@ -282,11 +298,26 @@ export function DealsPage() {
   }, [isTable, data, total, effectivePageSize, clampPageTo]);
 
   const filtersActive = activeCount(
-    { companyId, value, stalled, stageId: isTable ? stageId : "", months: months.join(",") },
+    {
+      companyId,
+      value,
+      stalled,
+      stageId: isTable ? stageId : "",
+      months: months.join(","),
+      investors,
+    },
     q,
   );
   const resetFilters = () =>
-    update({ q: "", companyId: "", value: "", stageId: "", stalled: "", months: [] });
+    update({
+      q: "",
+      companyId: "",
+      value: "",
+      stageId: "",
+      stalled: "",
+      months: [],
+      investors: "",
+    });
   // La media è quella dell'insieme filtrato: mostrarla rende esplicito il
   // criterio. L'unità la dichiara la risposta (euro, o giornate per gli sviluppatori).
   const valueUnit: DealValueUnit = data?.valueUnit ?? "EUR";
@@ -374,6 +405,26 @@ export function DealsPage() {
             </option>
           ))}
         </FilterSelect>
+        {/*
+          Le offerte condivise con gli investitori (21/10/2026): il numero si
+          conta senza questo filtro, e la voce a zero non si offre — a meno che
+          sia quella scelta.
+        */}
+        {conInvestitori && (
+          <FilterSelect
+            icon="investors"
+            label={t("Filtra le offerte condivise con gli investitori")}
+            value={investors}
+            onChange={(v) => update({ investors: v as DealsPrefs["investors"] })}
+          >
+            <option value="">{t("Tutte, condivise o no")}</option>
+            {((facets?.sharedWithInvestors ?? 0) > 0 || investors === "shared") && (
+              <option value="shared">
+                {t("Condivise con gli investitori")} ({facets?.sharedWithInvestors ?? 0})
+              </option>
+            )}
+          </FilterSelect>
+        )}
         {view === "table" && (
           <>
             <FilterSelect
@@ -471,7 +522,7 @@ export function DealsPage() {
 
       {areaMenu}
       <NewDealDialog open={createOpen} onClose={() => setCreateOpen(false)} />
-      <DealDetailDrawer dealId={selectedId} onClose={closeDeal} />
+      <DealDetailDrawer dealId={selectedId} onClose={closeDeal} indietro={ritornoAlPannello} />
     </div>
   );
 }
@@ -586,7 +637,9 @@ function DealTable({
     node: quickTaskNode,
     aggiungiTask,
   } = useDealMenu(onOpen ?? (() => undefined));
-  const navigate = useNavigate();
+  // Il prossimo passo si apre qui sopra, non nelle Bacheche: chiudendolo si
+  // ritrova l'elenco com'era (21/10/2026).
+  const [passoAperto, setPassoAperto] = useState<string | null>(null);
   const oggi = todayISO();
   const [pendingLost, setPendingLost] = useState<{ deal: DealListItem; stageId: string } | null>(
     null,
@@ -756,9 +809,7 @@ function DealTable({
                   altri={Math.max(0, deal.openTaskCount - 1)}
                   // La vista in giornate non apre niente: legge e basta.
                   onApri={
-                    onOpen && deal.nextStep
-                      ? () => navigate(`/bacheche?task=${deal.nextStep!.id}`)
-                      : undefined
+                    onOpen && deal.nextStep ? () => setPassoAperto(deal.nextStep!.id) : undefined
                   }
                   onAggiungi={onOpen ? () => aggiungiTask(deal) : undefined}
                 />
@@ -784,6 +835,12 @@ function DealTable({
       />
       {quickTaskNode}
       {menu}
+      <TaskDetailDrawer
+        taskId={passoAperto}
+        onClose={() => setPassoAperto(null)}
+        onOpenTask={setPassoAperto}
+        indietro={{ etichetta: t("Offerte"), onClick: () => setPassoAperto(null) }}
+      />
     </div>
   );
 }

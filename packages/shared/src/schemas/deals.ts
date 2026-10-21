@@ -209,6 +209,11 @@ export const dealFiltersSchema = paginationSchema.extend({
    * mese è quello di `dealMonthKey`: chiusura effettiva, poi prevista.
    */
   months: z.string().optional(),
+  /**
+   * Solo le offerte condivise con gli investitori (`visibleToSalesMonitors`,
+   * 21/10/2026); assente = tutte, condivise o no.
+   */
+  investors: z.enum(["shared"]).optional(),
 });
 export type DealFilters = z.infer<typeof dealFiltersSchema>;
 
@@ -250,6 +255,11 @@ export interface PagedDeals extends Paged<DealListItem> {
      * calcolati sull'insieme di partenza come clienti e fasi.
      */
     months: Array<{ key: string; count: number }>;
+    /**
+     * Quante offerte dell'insieme sono condivise con gli investitori, contate
+     * con gli altri filtri ma **senza** il proprio, come ogni tendina.
+     */
+    sharedWithInvestors: number;
   };
 }
 

@@ -419,11 +419,11 @@ export function buildTools(db, user, keelopsUrl, attachments = null) {
         const storiaFasi = eventi.filter((e) => e.action === "stage_changed").map((e) => {
           const p = parsePayload(e.payload);
           return { da: p.from ?? null, a: p.to ?? null, motivo: p.reason ?? null,
-                   di: e.author ?? null, quando: minute(e.createdAt) };
+                   di: e.author ?? null, ...(p.via ? { via: p.via } : {}), quando: minute(e.createdAt) };
         });
         const cambiValore = eventi.filter((e) => e.action === "value_changed").map((e) => {
           const p = parsePayload(e.payload);
-          return { da: p.from ?? null, a: p.to ?? null, di: e.author ?? null, quando: minute(e.createdAt) };
+          return { da: p.from ?? null, a: p.to ?? null, di: e.author ?? null, ...(p.via ? { via: p.via } : {}), quando: minute(e.createdAt) };
         });
         const messaggi = (await db.all(`
           SELECT c.body, c.createdAt, COALESCE(u.nickName, u.name) AS author

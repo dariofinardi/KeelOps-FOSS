@@ -3,7 +3,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useDebouncedValue } from "@/lib/useDebouncedValue";
 import {
@@ -31,6 +30,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useRecordOpener } from "@/features/tasks/useRecordOpener";
 import { TopbarTagFilter } from "./TopbarTagFilter";
+import { useVaiDallaPagina } from "@/lib/ritorno";
 
 const TYPE_ICONS = {
   task: ListTodo,
@@ -179,7 +179,7 @@ function ScopeToggle({
  */
 export function GlobalSearch() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
+  const vai = useVaiDallaPagina();
   const target = useViewSearchTarget();
   const { prefs, update } = useListPrefs<{ scope: SearchScope }>("kancrm-search-scope", {
     scope: "local",
@@ -266,9 +266,10 @@ export function GlobalSearch() {
     // qualunque sia la sua natura.
     else if (result.type === "comment" || result.type === "attachment") {
       if (result.taskId) record.open(result.taskId, result.taskKind);
-    } else if (result.type === "project") navigate(`/progetti/${result.id}`);
-    else if (result.type === "recurrence") navigate("/bacheche?view=recurrence");
-    else navigate("/contatti");
+      // Dalla ricerca a un'altra pagina: all'arrivo «← dove si era» (21/10/2026).
+    } else if (result.type === "project") vai(`/progetti/${result.id}`);
+    else if (result.type === "recurrence") vai("/bacheche?view=recurrence");
+    else vai("/contatti");
   };
 
   // Il segnaposto annuncia la scorciatoia che vale **in quel modo**: Ctrl+K

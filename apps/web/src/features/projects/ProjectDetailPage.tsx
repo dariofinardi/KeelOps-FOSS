@@ -4,7 +4,7 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { useDocumentTitle } from "@/lib/use-document-title";
 import { useTranslation } from "react-i18next";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import {
   Archive,
   ArchiveRestore,
@@ -84,6 +84,7 @@ import {
   useUpdateProject,
   useUpdateProjectMembers,
 } from "./useProjects";
+import { useVaiA } from "@/lib/ritorno";
 
 type ViewMode = "list" | "kanban";
 
@@ -115,7 +116,7 @@ const VIEW_OPTIONS: Array<ViewOption<ViewMode>> = [
 export function ProjectDetailPage() {
   const { t } = useTranslation();
   const { id = "" } = useParams();
-  const navigate = useNavigate();
+  const vaiA = useVaiA();
   const currentUser = useCurrentUser();
   const { data: project } = useProjectDetail(id);
   useDocumentTitle(project?.name ?? null);
@@ -281,7 +282,12 @@ export function ProjectDetailPage() {
           type="button"
           className="flex max-w-md items-center gap-2 rounded-md bg-muted/60 px-3 py-2 text-left text-sm text-muted-foreground hover:bg-muted"
           title={t("Apri l'offerta di provenienza")}
-          onClick={() => navigate(`${AREAS.deals.to}?deal=${project.deal!.id}`)}
+          onClick={() =>
+            vaiA(`${AREAS.deals.to}?deal=${project.deal!.id}`, {
+              etichetta: t("Progetto «{{nome}}»", { nome: project.name }),
+              record: project.deal!.id,
+            })
+          }
         >
           <AREAS.deals.icon className="size-4 shrink-0" />
           <span className="min-w-0 flex-1 truncate">
@@ -306,6 +312,10 @@ export function ProjectDetailPage() {
             <OpenLinked
               to={`${AREAS.contacts.to}?azienda=${project.company.id}`}
               title={t("Apri la scheda del cliente")}
+              ritorno={{
+                etichetta: t("Progetto «{{nome}}»", { nome: project.name }),
+                record: project.company.id,
+              }}
             />
           </p>
         ) : (

@@ -8,12 +8,13 @@ import {
   CircleDot,
   Coins,
   Flag,
+  Glasses,
+  type LucideIcon,
   Shapes,
   Tags,
   Timer,
   User,
   Users,
-  type LucideIcon,
 } from "lucide-react";
 import { AREAS } from "@/components/layout/areas";
 import { cn } from "@/lib/utils";
@@ -54,6 +55,11 @@ export const FILTER_ICONS = {
   period: CalendarClock,
   /** Importo, valore economico. */
   amount: Coins,
+  /**
+   * Chi sta fuori e guarda: le offerte condivise con gli investitori. Gli
+   * occhiali sono il segno che quelle offerte portano già nella tabella.
+   */
+  investors: Glasses,
   sort: ArrowDownUp,
 } satisfies Record<string, LucideIcon>;
 

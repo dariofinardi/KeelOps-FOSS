@@ -5,6 +5,7 @@ import { NotificationType, TaskKind, VisibilityScope, type CreateTaskInput } fro
 import { prisma } from "../../db";
 import type { User } from "../../generated/prisma/client";
 import { badRequest } from "../../lib/http-errors";
+import { funzioneAttiva } from "../../edition/funzioni-stato";
 import { assertCanSeeDeals, canSeeScope } from "../visibility/service";
 import { assertProjectEdit } from "../projects/access";
 import {
@@ -51,6 +52,10 @@ const seesAllAdmin = await canSeeScope(user, VisibilityScope.ADMIN_TASKS);
 if (input.projectId) {
   if (input.relatedDealId) {
     throw badRequest("Un task può appartenere a un progetto oppure a un'offerta, non entrambi");
+  }
+  // I progetti spenti per l'installazione (17/10/2026): nessun task nuovo dentro.
+  if (!funzioneAttiva("progetti")) {
+    throw badRequest("I progetti non sono attivi in questa installazione");
   }
   await assertProjectEdit(user, input.projectId);
   kind = TaskKind.PROJECT;

@@ -7,7 +7,7 @@ import Fastify, { type FastifyInstance, type FastifyServerOptions } from "fastif
 import cors, { type FastifyCorsOptionsDelegateCallback } from "@fastify/cors";
 import helmet from "@fastify/helmet";
 import multipart from "@fastify/multipart";
-import { forbidden } from "./lib/http-errors";
+import { forbidden, notFound } from "./lib/http-errors";
 import rateLimit from "@fastify/rate-limit";
 import { localeFromRequest, serverT } from "./i18n";
 import fastifyStatic from "@fastify/static";
@@ -42,7 +42,10 @@ import { llmJobRoutes } from "./modules/jobs/routes";
 import { devMetricsRoutes } from "./modules/dev-metrics/route";
 import { notificationRoutes } from "./modules/notifications/routes";
 import { registraElencoRotte } from "./edition/route-list";
-import { moduliAttivi, politicheDei } from "./edition/registry";
+import { moduliDellEdizione, politicheDei } from "./edition/registry";
+import { caricaFunzioni, funzioneDelPercorso } from "./edition/funzioni";
+import { funzioniRoutes } from "./modules/admin/funzioni-routes";
+import { funzioneAttiva } from "./edition/funzioni-stato";
 import { impostaPoliticheRuoli } from "./edition/roles";
 import { impostaRegoleAccessoTask } from "./modules/tasks/access-rules";
 import { impostaAgganciTask } from "./modules/tasks/lifecycle-hooks";
@@ -132,9 +135,16 @@ export async function buildApp(): Promise<FastifyInstance> {
   registraElencoRotte(app);
   // I ruoli che i moduli dell'edizione portano (portale, monitor vendite):
   // prima di ogni rotta, il guardiano li legge a ogni richiesta.
-  impostaPoliticheRuoli(politicheDei(moduliAttivi()));
-  impostaRegoleAccessoTask(moduliAttivi().flatMap((m) => (m.accessoTask ? [m.accessoTask] : [])));
-  impostaAgganciTask(moduliAttivi().flatMap((m) => (m.agganciTask ? [m.agganciTask] : [])));
+  //
+  // **Di tutta l'edizione, accesi o spenti** (17/10/2026): ruoli, regole e
+  // agganci si registrano una volta sola, e un modulo riacceso dalla pagina
+  // Sistema deve ritrovarli senza riavvio. Con il modulo spento le sue rotte
+  // rispondono 404 e i suoi scope non valgono: vedi plan/funzioni-istanza.md.
+  await caricaFunzioni();
+  const moduliDellaBuild = moduliDellEdizione();
+  impostaPoliticheRuoli(politicheDei(moduliDellaBuild));
+  impostaRegoleAccessoTask(moduliDellaBuild.flatMap((m) => (m.accessoTask ? [m.accessoTask] : [])));
+  impostaAgganciTask(moduliDellaBuild.flatMap((m) => (m.agganciTask ? [m.agganciTask] : [])));
 
   if (config.isDev) {
     /**
@@ -161,7 +171,7 @@ export async function buildApp(): Promise<FastifyInstance> {
 
   // Security headers; CSP solo in produzione (in dev il frontend gira su Vite).
   const cspDeiModuli = (tipo: "script" | "img" | "connect" | "frame") =>
-    moduliAttivi().flatMap((modulo) => modulo.csp?.[tipo] ?? []);
+    moduliDellaBuild.flatMap((modulo) => modulo.csp?.[tipo] ?? []);
   await app.register(helmet, {
     contentSecurityPolicy: config.isDev
       ? false
@@ -277,6 +287,16 @@ export async function buildApp(): Promise<FastifyInstance> {
   registerMaintenanceGate(app);
 
   /**
+   * **Le aree del nucleo spente** (17/10/2026): le loro rotte rispondono 404,
+   * come se non esistessero. Per prefisso, in un punto solo: una guardia per
+   * rotta dimenticherebbe la prossima. Vedi `edition/funzioni.ts`.
+   */
+  app.addHook("onRequest", async (request) => {
+    const funzione = funzioneDelPercorso(request.raw.url ?? "");
+    if (funzione && !funzioneAttiva(funzione)) throw notFound();
+  });
+
+  /**
    * I plugin side-loaded (`PLUGINS=mappa,mcp`): montati su /plugins/<nome>/
    * col dispatcher condiviso, l'autenticazione vera del core e il database in
    * sola lettura. Prima dell'auth delle rotte applicative non serve stare:
@@ -347,13 +367,28 @@ export async function buildApp(): Promise<FastifyInstance> {
   dashboardRoutes(app);
   searchRoutes(app);
   adminRoutes(app);
+  funzioniRoutes(app);
   trashRoutes(app);
   importRoutes(app);
   calendarRoutes(app);
   pushRoutes(app);
   tagRoutes(app);
   // I moduli dell'edizione (ticket, timesheet, integrazioni…): nella community nessuno.
-  for (const modulo of moduliAttivi()) modulo.rotte?.(app);
+  //
+  // Ognuno nel suo contesto, con una guardia che risponde 404 quando il modulo
+  // è spento (17/10/2026): le rotte si registrano tutte al boot, così si
+  // riaccende senza riavvio. Un hook di contesto vale solo per le rotte del
+  // contesto, e i moduli non aggiungono hook né decorazioni loro.
+  for (const modulo of moduliDellaBuild) {
+    if (!modulo.rotte) continue;
+    const rotte = modulo.rotte;
+    await app.register(async (contesto) => {
+      contesto.addHook("onRequest", async () => {
+        if (!funzioneAttiva(modulo.nome)) throw notFound();
+      });
+      rotte(contesto);
+    });
+  }
 
   /**
    * **Niente di questa applicazione va nei motori di ricerca.**

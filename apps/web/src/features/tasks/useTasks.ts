@@ -354,8 +354,10 @@ export function useDeleteTask() {
   const toast = useToast();
   return useMutation({
     mutationFn: (id: string) => api<void>(`/api/tasks/${id}`, { method: "DELETE" }),
-    onSuccess: () => {
-      invalidate();
+    onSuccess: (_data, id) => {
+      // Con l'id: il pannello di sotto (l'offerta che lo elencava fra i
+      // collegati, il task padre) deve perderlo subito, non alla prossima apertura.
+      invalidate(id);
       toast(t("Task spostato nel cestino"), "success");
     },
     onError: (error) => toast(errorMessage(error, t("Eliminazione non riuscita")), "error"),

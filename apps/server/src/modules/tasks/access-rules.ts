@@ -3,7 +3,7 @@
 
 import { TaskKind, type VisibilityAccess } from "@kancrm/shared";
 import type { Prisma, User } from "../../generated/prisma/client";
-import { moduliAttivi } from "../../edition/registry";
+import { moduliDellEdizione } from "../../edition/registry";
 import type { TaskAccessInfo } from "./access";
 import type { TaskAccessContext } from "./permissions";
 
@@ -46,7 +46,9 @@ let impostate: readonly RegoleAccessoTask[] | null = null;
 
 /** Le regole dei moduli attivi (o di quelli dell'edizione configurata, fuori da `buildApp`). */
 export function regoleAccessoTask(): readonly RegoleAccessoTask[] {
-  return (impostate ??= moduliAttivi().flatMap((m) => (m.accessoTask ? [m.accessoTask] : [])));
+  return (impostate ??= moduliDellEdizione().flatMap((m) =>
+    m.accessoTask ? [m.accessoTask] : [],
+  ));
 }
 
 export function impostaRegoleAccessoTask(regole: readonly RegoleAccessoTask[]): void {

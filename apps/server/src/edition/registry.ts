@@ -11,6 +11,8 @@ import type { PoliticaRuolo } from "./roles";
 import type { RegoleAccessoTask } from "../modules/tasks/access-rules";
 import type { AgganciTask } from "../modules/tasks/lifecycle-hooks";
 import type { DialettoImport } from "../modules/imports/dialects";
+import type { VisibilityScope } from "@kancrm/shared";
+import { funzioneAttiva } from "./funzioni-stato";
 
 export type Edizione = "community" | "commerciale";
 
@@ -74,6 +76,17 @@ export interface ModuloEdizione {
   csp?: Partial<Record<"script" | "img" | "connect" | "frame", readonly string[]>>;
   /** Spreadsheet dialects the Excel import understands (modules/imports/dialects.ts). */
   dialettiImport?: readonly DialettoImport[];
+  /**
+   * **La voce del modulo fra le funzioni dell'istanza** (17/10/2026): come si
+   * chiama nella pagina Sistema, da quali funzioni dipende e quale scope di
+   * gruppo porta. Vedi `edition/funzioni.ts`.
+   */
+  interruttore?: {
+    etichetta: string;
+    descrizione: string;
+    richiede?: readonly string[];
+    scope?: VisibilityScope;
+  };
 }
 
 /** La porta `nome` dei moduli attivi, o null se nessun modulo la presta. */
@@ -96,12 +109,26 @@ export function edizioneInVigore(): Edizione {
   return MODULI_COMMERCIALI.length > 0 ? config.edizione : "community";
 }
 
-/** Whether the module `nome` is part of the edition in force. */
+/** Whether the module `nome` is part of the edition in force and switched on (17/10/2026). */
 export function haModulo(nome: string): boolean {
   return moduliAttivi().some((modulo) => modulo.nome === nome);
 }
 
-/** I moduli dell'edizione in uso (o di quella chiesta, nei test). */
-export function moduliAttivi(edizione: Edizione = edizioneInVigore()): readonly ModuloEdizione[] {
+/**
+ * I moduli che l'edizione porta, accesi o spenti: servono a chi registra al
+ * boot (rotte con la guardia, lavori pianificati) e al catalogo delle funzioni.
+ */
+export function moduliDellEdizione(
+  edizione: Edizione = edizioneInVigore(),
+): readonly ModuloEdizione[] {
   return edizione === "commerciale" ? MODULI_COMMERCIALI : [];
+}
+
+/**
+ * I moduli dell'edizione in uso (o di quella chiesta, nei test) **accesi** in
+ * questa installazione: dal 17/10/2026 un amministratore può spegnerne uno, e
+ * chi chiede l'elenco a ogni uso lo vede sparire senza riavvio.
+ */
+export function moduliAttivi(edizione: Edizione = edizioneInVigore()): readonly ModuloEdizione[] {
+  return moduliDellEdizione(edizione).filter((modulo) => funzioneAttiva(modulo.nome));
 }

@@ -352,5 +352,9 @@
   "Indica il valore: un'offerta vinta senza importo conterebbe zero": "Enter the value: a won deal with no amount would count as zero",
   "È l'utente di servizio del modulo «{{name}}»: sceglierne un altro nel modulo prima di eliminarlo": "This is the service user of the «{{name}}» module: choose another one in the module before deleting it",
   "I riepiloghi delle ore sono riservati ai manager": "Hour summaries are for managers only",
-  "Questo ruolo non è previsto in questa edizione": "This role is not available in this edition"
+  "Questo ruolo non è previsto in questa edizione": "This role is not available in this edition",
+  "I progetti non sono attivi in questa installazione": "Projects are not enabled in this installation",
+  "Funzione sconosciuta: {{chiave}}": "Unknown feature: {{chiave}}",
+  "Azienda non valida": "Invalid company",
+  "Un'offerta si modifica con i campi dell'offerta, non come task": "A deal is changed through its own fields, not as a task"
 }

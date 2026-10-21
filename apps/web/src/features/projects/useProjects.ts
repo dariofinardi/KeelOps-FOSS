@@ -10,6 +10,7 @@ import type {
 } from "@kancrm/shared";
 import { useInternalLists } from "@/features/auth/useAuth";
 import { api } from "@/lib/api";
+import { useFunzioneAccesa } from "@/lib/funzioni";
 
 /**
  * Elenco dei progetti, con la ricerca fatta dal server: per nome e — con
@@ -22,7 +23,10 @@ export function useProjects(search: { q?: string; searchTasks?: boolean } = {}) 
   if (q) params.set("q", q);
   if (searchTasks) params.set("searchTasks", "true");
   const query = params.toString();
-  const enabled = useInternalLists();
+  // Con i progetti spenti nell'installazione (17/10/2026) la rotta risponde
+  // 404: la tendina dei progetti di ogni pannello resta vuota senza chiederla.
+  const progettiAccesi = useFunzioneAccesa("progetti");
+  const enabled = useInternalLists() && progettiAccesi;
   return useQuery({
     queryKey: ["projects", q, searchTasks],
     queryFn: () => api<ProjectListItem[]>(`/api/projects${query ? `?${query}` : ""}`),

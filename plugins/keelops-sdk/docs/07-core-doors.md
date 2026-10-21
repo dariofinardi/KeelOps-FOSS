@@ -19,7 +19,7 @@ Which doors exist depends on the [edition](02-manifest.md#editions):
 | `mail` (with `mail:send`) | ✓ | ✓ |
 | `plugins` (with `plugins:strumenti`) | ✓ | ✓ |
 | `google` (with `google:oauth`) | `null` | ✓ |
-| `timesheet` (with `timesheet:write`) | `null` | ✓ |
+| `timesheet` (with `timesheet:write`; reading only with `timesheet:read`) | `null` | ✓ |
 | `ollamaUrl` | ✓ if configured | ✓ if configured |
 
 ## Tasks
@@ -32,6 +32,7 @@ const task = await ctx.tasks.create(user.id, {
   assigneeId, supervisorId,                     // optional: default is the creator
   dueDate: "2026-10-15",                        // optional, YYYY-MM-DD
   statusId, activityTypeId,                     // optional
+  relatedDealId,                                // optional: a deadline linked to a deal
   ref: nc.id,                                   // the plugin's record, for the mark
 });
 ```
@@ -61,6 +62,55 @@ not as an error. The shape:
   pluginNick, pluginRef,     // the mark, when a plugin created it
 }
 ```
+
+With `"permessi": ["tasks:write"]` a plugin can also **change** a task, with
+the service of the task panel (statuses, sequences, notifications, history):
+
+```js
+await ctx.tasks.update(user.id, taskId, { dueDate: "2026-11-05", statusId });
+```
+
+The input is the core's `updateTaskSchema` (only the fields passed). A deal is
+refused: it has its own fields and rules, see [deals](#deals-and-contacts).
+
+### The channel in the history
+
+Everything a plugin writes on behalf of a person goes into the history **with
+the plugin's channel**: "Maria Rossi via MCP". The channel is the
+manifest's `canale`, or its `titolo`. The person stays the one who asked; the
+channel says where the change came from.
+
+## Deals and contacts
+
+With `"permessi": ["deals:write"]`, `ctx.offerte` creates and changes deals;
+with `"contacts:write"`, `ctx.crm` finds or creates companies and creates and
+changes contacts. Both run the **functions of the app's pages**, as the
+person (with the admin elevation applied, as everywhere): their permissions,
+the stages and their closing rules, the statuses, the notifications, the
+field-by-field history with the channel. The input is validated by the core
+with the shared schemas; an id that does not exist is a refusal with its
+sentence. In the public demo nothing is written.
+
+```js
+const deal = await ctx.offerte.crea(user.id, {        // createDealSchema
+  title, description, stageId, companyId, contactId, assigneeId,
+  dealValue, probability, expectedCloseDate, visibleToSalesMonitors,
+});                                                    // → the deal's detail
+await ctx.offerte.aggiorna(user.id, deal.id, {         // updateDealSchema: only what changes
+  contactId, stageId, lostReason, visibleToSalesMonitors,
+});
+
+const company = await ctx.crm.azienda(user.id, { name: "Acme srl", city }); // → { id, name, created }
+await ctx.crm.aggiornaAzienda(user.id, company.id, { vatNumber });
+const contact = await ctx.crm.creaContatto(user.id, { firstName, lastName, email, companyId });
+await ctx.crm.aggiornaContatto(user.id, contact.id, { roleTitle: "CTO" });
+```
+
+`azienda` **finds or creates**: a company with the same name, written
+differently ("Acme srl" for "Acme"), comes back with `created: false`. The
+reference tables (stages, statuses, activity types, people) are read with
+`ctx.db`. Companies and contacts have no history in the core: a plugin that
+needs one keeps it in its own tables.
 
 ## Attachments
 
@@ -101,8 +151,12 @@ before offering a command; the door that writes will check again anyway.
 
 ## Timesheet
 
-With `"permessi": ["timesheet:write"]`, on a core with the `timesheet`
-function (commercial; elsewhere `ctx.timesheet` is `null`):
+On a core with the `timesheet` function (commercial; elsewhere
+`ctx.timesheet` is `null`). With `"permessi": ["timesheet:write"]` the whole
+door; with `"timesheet:read"` only the two reading functions, `quadro` and
+`meseChiuso` — a plugin that asked to read never holds a function that writes.
+
+### Writing (`timesheet:write`)
 
 ```js
 const cell = await ctx.timesheet.aggiungi(user.id, {
@@ -122,6 +176,26 @@ carry the plugin's mark, because it holds hours of mixed origin and belongs
 to whoever did the work. The grid's rules apply: a closed month, a task the
 person cannot see, a task in the bin or on a board, more than 24 hours in a
 day — each throws with a readable message. The public demo writes nothing.
+
+### Reading the month (`timesheet:read`)
+
+```js
+const q = await ctx.timesheet.quadro(user.id, "2026-09", [userId1, userId2]);
+// → { month, hours, expected, calendar, weeks: [...],
+//     people: [{ userId, name, isActive, weeklyHours, hours, expected,
+//                coverage, weeks: [{ week, hours, expected, untracked, coverage }],
+//                projects: [{ name, hours, share, weeks }] }],
+//     projects: [{ name, hours, share }] }
+```
+
+The month as the timesheet analytics page and its spreadsheet show it —
+the same function, so a report built by a plugin matches the one downloaded
+by hand: recorded hours against the hours due by contract, absences included,
+and where the time went. It is read **with that person's eyes**: the hours
+they may see, the people they may look at; the optional list of people picks
+among those, it never widens them. Hours are rounded to a tenth and shares to
+whole percents, as on the page. For exact sums over any span of days, query
+`TimeEntry` with `timeEntryPerimeter(user)` ([data](04-data.md)).
 
 ## Mail
 

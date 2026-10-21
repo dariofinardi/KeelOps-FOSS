@@ -226,7 +226,7 @@ export function toActivityDto(activity: ActivityForDto): Activity {
   return {
     id: activity.id,
     action: activity.action,
-    payload: activity.payload ? (JSON.parse(activity.payload) as unknown) : null,
+    ...payloadEdCanale(activity.payload),
     createdAt: activity.createdAt.toISOString(),
     user: userRef(activity.user),
   };
@@ -248,4 +248,22 @@ export function toTaskDetail(task: TaskForDetail, ctx: TaskAccessContext): TaskD
     parent: task.parentTask && !task.parentTask.deletedAt ? toSequenceRef(task.parentTask) : null,
     subtasks: task.subtasks.map(toSequenceRef),
   };
+}
+
+/**
+ * Il payload di una voce di cronologia e, a parte, il canale da cui è
+ * arrivata (`via`, 21/10/2026): «Maria Rossi via MCP». Il canale esce dal
+ * payload, così chi legge i campi di sempre non lo trova in mezzo.
+ */
+function payloadEdCanale(raw: string | null): { payload: unknown; via: string | null } {
+  if (!raw) return { payload: null, via: null };
+  const letto = JSON.parse(raw) as unknown;
+  if (letto && typeof letto === "object" && !Array.isArray(letto) && "via" in letto) {
+    const { via, ...resto } = letto as Record<string, unknown>;
+    return {
+      payload: Object.keys(resto).length > 0 ? resto : null,
+      via: typeof via === "string" ? via : null,
+    };
+  }
+  return { payload: letto, via: null };
 }

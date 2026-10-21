@@ -115,6 +115,12 @@ export const currentUserSchema = z.object({
    * altro, e in produzione non cambia niente.
    */
   demoMode: z.boolean(),
+  /**
+   * Le funzioni **spente** in questa installazione (17/10/2026), in effetti:
+   * aree del nucleo e moduli dell'edizione. Menu, rotte e pagine le nascondono.
+   * Vedi `plan/funzioni-istanza.md`.
+   */
+  funzioniSpente: z.array(z.string()),
 });
 export type CurrentUser = z.infer<typeof currentUserSchema>;
 

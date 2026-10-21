@@ -24,6 +24,7 @@ import { AttachmentsPeek, CommentsPeek } from "@/features/tasks/TaskPeek";
 import { useRecordOpener } from "@/features/tasks/useRecordOpener";
 import { cellKey, dayFlag, dayTotals, monthTotal } from "./totals";
 import { daysOfPeriod } from "./period";
+import { useModuloAcceso } from "@/lib/funzioni";
 
 /**
  * **La griglia delle ore**: la vista quotidiana e quella a periodo, con le
@@ -220,9 +221,12 @@ export function TimesheetGrid({
   const { data, isLoading } = useTimesheetPeriod(period, userIds);
   // Suggerimenti solo sul PROPRIO timesheet e solo se li si vuole vedere: la
   // griglia aggregata di più persone è in sola lettura, e lì non si scrive.
+  // Con il timesheet completo spento (17/10/2026) l'hook resta lo stesso — le
+  // regole degli hook — ma non chiede niente.
+  const timesheetCompleto = useModuloAcceso("timesheet");
   const { data: hints } = (useOreSuggerite ?? nessunSuggerimento)(
     period,
-    showHints && userIds.length === 0,
+    timesheetCompleto && showHints && userIds.length === 0,
   );
   const hintOf = useMemo(() => {
     const map = new Map<string, number>();
@@ -640,6 +644,7 @@ function AddTaskPicker({
   const { t } = useTranslation();
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
+  const timesheetCompleto = useModuloAcceso("timesheet");
 
   // La ricerca parte a digitazione ferma: ogni tasto è una query sul server.
   const search = useDebouncedValue(q, 250);
@@ -674,7 +679,7 @@ function AddTaskPicker({
         />
         <Plus className="size-4 shrink-0 text-muted-foreground" />
         {/* Rows from activity and removal of empty rows: commercial (slot). */}
-        {RigheDalleAttivita && <RigheDalleAttivita period={period} />}
+        {timesheetCompleto && RigheDalleAttivita && <RigheDalleAttivita period={period} />}
       </div>
       {open && candidates.length > 0 && (
         <ul

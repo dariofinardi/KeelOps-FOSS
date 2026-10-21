@@ -57,6 +57,8 @@ directly must not show more than that:
 - `ctx.tasks.read` / `readMany` apply the core's exact rule;
 - `taskPerimeter(user)` is a conservative SQL filter for queries over many
   tasks: when in doubt it hides;
+- `timeEntryPerimeter(user)` is the core's exact rule for timesheet hours,
+  so that sums match the app;
 - a plugin's own records follow its own rules (QABox has sectors with
   readers, operators and managers) — check them **on the server**, in every
   route and every tool, never only by hiding a button.

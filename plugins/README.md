@@ -145,6 +145,13 @@ plus `ollama`); ports that depend on a missing module are `null`
 - `richiede: ["timesheet", …]` (requires) — not mounted if any of those features is missing;
 - `usa: [...]` (uses) — mounted anyway and adapts: it is information, not a check.
 
+Since 17/10/2026 an administrator can also **switch off** a module or a core
+area for the installation (System page, "Features"): a switched-off module is
+missing from `ctx.funzioni` and its ports are `null`; a switched-off core area
+answers 404 on its routes. The plugin reads all this
+**when it is mounted**: a change takes effect for plugins at the next restart
+of the service (see `plan/funzioni-istanza.md`).
+
 A plugin listed in `PLUGINS` that is not mounted because of the edition says so
 in the log and on its card in System ("Not available in this edition", with
 the reason). Today: Presenze, QABox, QuoteDOCX, Rapportini and MCP-pro are
@@ -350,9 +357,16 @@ the database (neither `node:sqlite`, nor Prisma, nor a MariaDB client), does
 not read the `.env`, does not call the services the core lends. The database
 is the `ctx.db` driver; attached files are `ctx.attachments.read`; Google
 credentials are `ctx.google`; **timesheet hours** are added with
-`ctx.timesheet.aggiungi` (permission `timesheet:write`) and **mail** goes out
+`ctx.timesheet.aggiungi` (permission `timesheet:write`; the month's
+analytics are read with `ctx.timesheet.quadro`, permission `timesheet:read`,
+since 14/10/2026) and **mail** goes out
 with `ctx.mail.invia` (permission `mail:send`), since 29/09/2026 for the work
 reports — never an SMTP of its own, never a write to `TimeEntry`;
+**deals, companies and contacts** are written with `ctx.offerte` and
+`ctx.crm` (permissions `deals:write`, `contacts:write`) and tasks changed with
+`ctx.tasks.update` (`tasks:write`), since 21/10/2026: the functions of the
+app's pages, as the person, and every line of history says the plugin's
+channel ("via MCP", manifest `canale`);
 **Ollama is `keelops-sdk/ollama.mjs`** (`embed`, `chat`, `normalize`, `dot`)
 with the address from `ctx.ollamaUrl` — a failure is `null`, never an
 exception, as in the core. The allowed exceptions are the plugin's own data

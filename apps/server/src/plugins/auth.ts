@@ -13,6 +13,7 @@ import { canElevate, effectiveUser, isElevated } from "../modules/auth/elevation
 import { shouldRefreshLastSeen } from "../modules/auth/last-seen";
 import { SESSION_COOKIE, findSessionUser } from "../modules/auth/session";
 import { isPubblica, type RegolaPubblica } from "./plugin-public";
+import { funzioniSpenteOra } from "../edition/funzioni-stato";
 
 declare module "fastify" {
   interface FastifyRequest {
@@ -246,6 +247,8 @@ export function toCurrentUser(
     // Globale, non della persona: la porta il DTO perché è il solo posto che
     // ogni schermata ha già, senza aggiungere una richiesta.
     demoMode: config.demo !== null,
+    // Anche questo è dell'installazione: menu, rotte e pagine si adeguano.
+    funzioniSpente: funzioniSpenteOra(),
   };
   return Object.assign(dto, ...estensioni);
 }

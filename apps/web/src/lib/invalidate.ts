@@ -44,6 +44,18 @@ export function invalidateTaskDetails(queryClient: QueryClient, id: string): voi
   for (const key of ["task", "deal", "ticket"]) {
     void queryClient.invalidateQueries({ queryKey: [key, id] });
   }
+  /**
+   * **E gli altri pannelli che lo mostrano** (21/10/2026). Un task cambiato da
+   * un pannello aperto sopra un altro — il task collegato sopra la sua offerta,
+   * il subtask sopra il padre, la richiesta sopra l'offerta — compare anche nel
+   * pannello di sotto: titolo, scadenza, stato nell'elenco dei collegati.
+   * Tornandoci, quello deve dire il vero. Si rinfrescano solo i dettagli
+   * **aperti** (TanStack rilegge le query montate; le altre diventano vecchie e
+   * si rileggono alla prossima apertura): uno o due pannelli, non l'archivio.
+   */
+  for (const key of ["task", "deal", "ticket"]) {
+    void queryClient.invalidateQueries({ queryKey: [key] });
+  }
   // Timeline lazy: quasi ogni modifica registra un'attività, e i commenti
   // cambiano con aggiunte ed eliminazioni.
   void queryClient.invalidateQueries({ queryKey: ["task-comments", id] });

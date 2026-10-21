@@ -246,7 +246,9 @@ async function handleRpc(message, user) {
     case "tools/list":
       return reply({ tools: strumenti(ctx.db, user, ctx.keelopsUrl, ctx.attachments ?? null)
         .filter((tool) => offribile(tool, user))
-        .map(({ name, description, inputSchema }) => ({ name, description, inputSchema })) });
+        // `annotations` (readOnlyHint…) when a tool declares them: the pro's
+        // writing tools say they write, and clients ask before calling them
+        .map(({ name, description, inputSchema, annotations }) => ({ name, description, inputSchema, ...(annotations ? { annotations } : {}) })) });
     case "tools/call": {
       const tool = strumenti(ctx.db, user, ctx.keelopsUrl, ctx.attachments ?? null).find((t) => t.name === params?.name);
       if (!tool) return fail(-32602, `strumento sconosciuto: ${params?.name}`);

@@ -53,3 +53,37 @@ export function projectPerimeter(user) {
     params: [user.id, user.id, user.id],
   };
 }
+
+/**
+ * **The time entries a user may read in summaries** (14/10/2026), as a filter
+ * over `TimeEntry e`.
+ *
+ * Unlike `taskPerimeter` this is **not** a tighter copy: it is the core's rule
+ * (`accessibleEntriesWhere` in modules/hours/helpers.ts) word for word,
+ * because hours get added up and compared with the app's own summaries — a
+ * plugin that saw fewer hours would give totals that do not match the
+ * timesheet page, and an accountant would rightly trust neither.
+ * `apps/server/test/sdk-time-entry-perimeter.test.ts` runs both on the same
+ * database and asserts they pick the same rows.
+ *
+ * Who sees whose hours:
+ *  - ADMIN, and whoever has "sees every timesheet": all of them;
+ *  - everyone else: their own, those on the tasks they supervise, those on
+ *    the tasks of the projects they manage.
+ *
+ * Hours on tasks in the trash are counted, as the core does: they were
+ * worked, and the month's total must not change when a task is deleted.
+ *
+ * @returns {{where: string, params: string[]}} an AND filter over TimeEntry e
+ */
+export function timeEntryPerimeter(user) {
+  if (user.role === "ADMIN" || user.canViewAllTimesheets) return { where: "1 = 1", params: [] };
+  return {
+    where: `(e.userId = ?
+      OR e.taskId IN (SELECT tsup.id FROM Task tsup WHERE tsup.supervisorId = ?)
+      OR e.taskId IN (SELECT tman.id FROM Task tman
+                      JOIN ProjectMember pman ON pman.projectId = tman.projectId
+                      WHERE pman.userId = ? AND pman.role = 'MANAGER'))`,
+    params: [user.id, user.id, user.id],
+  };
+}

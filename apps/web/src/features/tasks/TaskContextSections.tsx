@@ -3,12 +3,13 @@
 
 import { ArrowUpRight, CheckCircle2, Circle, FolderKanban, ListTree } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { AREAS } from "@/components/layout/areas";
 import type { TaskDetail } from "@kancrm/shared";
 import { CompanyCombobox } from "@/features/crm/CompanyCombobox";
 import { Label } from "@/components/ui/label";
 import { useUpdateTask } from "./useTasks";
+import { quiConPannello, useVaiA, type Ritorno } from "@/lib/ritorno";
 
 /**
  * Freccina accanto a un campo del Contesto: apre il record collegato.
@@ -24,15 +25,28 @@ import { useUpdateTask } from "./useTasks";
  * un dato, un posto) — la usa anche l'intestazione del progetto per la scheda
  * del cliente.
  */
-export function OpenLinked({ to, title }: { to: string; title: string }) {
+export function OpenLinked({
+  to,
+  title,
+  ritorno,
+  qui,
+}: {
+  to: string;
+  title: string;
+  /** Da dove si parte, per il «← …» all'arrivo (lib/ritorno.ts). */
+  ritorno?: Ritorno;
+  /** La pagina di adesso con il pannello aperto, per ritrovarlo tornando. */
+  qui?: string | null;
+}) {
   const navigate = useNavigate();
+  const vaiA = useVaiA();
   return (
     <button
       type="button"
       className="shrink-0 rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
       title={title}
       aria-label={title}
-      onClick={() => navigate(to)}
+      onClick={() => (ritorno ? vaiA(to, ritorno, qui) : navigate(to))}
     >
       <ArrowUpRight className="size-4" />
     </button>
@@ -42,6 +56,14 @@ export function OpenLinked({ to, title }: { to: string; title: string }) {
 export function ContextSection({ task }: { task: TaskDetail }) {
   const { t } = useTranslation();
   const updateTask = useUpdateTask();
+  const location = useLocation();
+  // Da questo pannello si va al progetto, all'offerta, al cliente: all'arrivo
+  // «← Task …», e tornando il pannello è di nuovo aperto dov'era (21/10/2026).
+  const daQuestoTask = (record?: string): Ritorno => ({
+    etichetta: t("Task «{{titolo}}»", { titolo: task.title }),
+    record,
+  });
+  const qui = quiConPannello(location, "task", task.id);
 
   const movable =
     (task.kind === "ADMIN" || task.kind === "PROJECT") &&
@@ -74,6 +96,8 @@ export function ContextSection({ task }: { task: TaskDetail }) {
               <OpenLinked
                 to={`${AREAS.projects.to}/${projectLinkId}`}
                 title={t("Apri il progetto")}
+                ritorno={daQuestoTask()}
+                qui={qui}
               />
             )}
           </div>
@@ -92,6 +116,8 @@ export function ContextSection({ task }: { task: TaskDetail }) {
               <OpenLinked
                 to={`${AREAS.deals.to}?deal=${task.relatedDeal.id}`}
                 title={t("Apri l'offerta collegata")}
+                ritorno={daQuestoTask(task.relatedDeal.id)}
+                qui={qui}
               />
             )}
           </div>
@@ -118,6 +144,8 @@ export function ContextSection({ task }: { task: TaskDetail }) {
                   <OpenLinked
                     to={`${AREAS.contacts.to}?azienda=${task.company.id}`}
                     title={t("Apri la scheda del cliente")}
+                    ritorno={daQuestoTask(task.company.id)}
+                    qui={qui}
                   />
                 )}
               </div>

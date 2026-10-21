@@ -352,5 +352,9 @@
   "Apri": "Abrir",
   "È l'utente di servizio del modulo «{{name}}»: sceglierne un altro nel modulo prima di eliminarlo": "Es el usuario de servicio del módulo «{{name}}»: elige otro en el módulo antes de eliminarlo",
   "I riepiloghi delle ore sono riservati ai manager": "Los resúmenes de horas están reservados a los gestores",
-  "Questo ruolo non è previsto in questa edizione": "Este rol no está previsto en esta edición"
+  "Questo ruolo non è previsto in questa edizione": "Este rol no está previsto en esta edición",
+  "I progetti non sono attivi in questa installazione": "Los proyectos no están activos en esta instalación",
+  "Funzione sconosciuta: {{chiave}}": "Función desconocida: {{chiave}}",
+  "Azienda non valida": "Empresa no válida",
+  "Un'offerta si modifica con i campi dell'offerta, non come task": "Una oferta se modifica con sus propios campos, no como tarea"
 }

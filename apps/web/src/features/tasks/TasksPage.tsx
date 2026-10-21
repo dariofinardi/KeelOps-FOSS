@@ -49,6 +49,7 @@ import { useListPrefs } from "@/lib/useListPrefs";
 import { useUrlFilterHandoff } from "@/lib/useUrlFilterHandoff";
 import { useViewSearch } from "@/lib/view-search";
 import { useTags } from "@/features/tags/useTags";
+import { useRitorno } from "@/lib/ritorno";
 
 type ViewMode = "agenda" | "table" | "kanban" | "recurrence";
 
@@ -156,6 +157,12 @@ export function TasksPage() {
     });
   });
 
+  // Arrivati qui da un'altra pagina (il prossimo passo di un'offerta, un
+  // contatore): «← da dove» nel pannello del task (21/10/2026).
+  const ritornoTask = useRitorno(selectedTaskId);
+  const ritornoAlPannello = ritornoTask
+    ? { etichetta: ritornoTask.etichetta, onClick: ritornoTask.torna }
+    : null;
   const closeTask = () => {
     setSelectedTaskId(null);
     if (searchParams.has("task")) {
@@ -300,6 +307,7 @@ export function TasksPage() {
           taskId={selectedTaskId}
           onClose={closeTask}
           onOpenTask={setSelectedTaskId}
+          indietro={ritornoAlPannello}
         />
       </div>
     );
@@ -525,6 +533,7 @@ export function TasksPage() {
         taskId={selectedTaskId}
         onClose={closeTask}
         onOpenTask={setSelectedTaskId}
+        indietro={ritornoAlPannello}
       />
     </div>
   );

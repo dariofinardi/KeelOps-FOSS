@@ -49,3 +49,4 @@ export * from "./schemas/timesheet-analytics";
 export * from "./schemas/absences";
 export * from "./rich-text";
 export * from "./temp-password";
+export * from "./funzioni";

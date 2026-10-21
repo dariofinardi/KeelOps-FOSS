@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useDocumentTitle } from "@/lib/use-document-title";
 import { LinkedTaskLayer } from "@/features/tasks/LinkedTaskLayer";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   CheckCircle2,
@@ -52,7 +52,10 @@ import {
   snapshotOfDeal,
   type DealSnapshot,
 } from "./deal-snapshot";
-import { edizione } from "@/edition/rotte";
+import { moduloAcceso } from "@/lib/funzioni";
+import { TornaIndietro } from "@/components/ui/torna-indietro";
+import { quiConPannello, useVaiA } from "@/lib/ritorno";
+import { useOpenLinkedTask } from "@/features/tasks/linked-task-context";
 
 /** In un'offerta la data che cambia è la chiusura prevista, non una scadenza. */
 const DEAL_ACTIVITY_LABELS = {
@@ -63,9 +66,11 @@ const DEAL_ACTIVITY_LABELS = {
 interface DealDetailDrawerProps {
   dealId: string | null;
   onClose: () => void;
+  /** Da dove si è arrivati, se da un'altra pagina (`lib/ritorno.ts`). */
+  indietro?: { etichetta: string; onClick: () => void } | null;
 }
 
-export function DealDetailDrawer({ dealId, onClose }: DealDetailDrawerProps) {
+export function DealDetailDrawer({ dealId, onClose, indietro }: DealDetailDrawerProps) {
   const { t } = useTranslation();
   const { data: deal, error } = useDealDetail(dealId);
   useDocumentTitle(deal?.title ?? null);
@@ -78,7 +83,11 @@ export function DealDetailDrawer({ dealId, onClose }: DealDetailDrawerProps) {
   return (
     // I link ai task (il «Task di origine») si aprono sopra l'offerta, e
     // chiudendoli si torna qui. La chiave azzera lo strato al cambio offerta.
-    <LinkedTaskLayer key={dealId ?? "nessuna"}>
+    // Il task aperto sopra porta «← Offerta …» per tornare qui.
+    <LinkedTaskLayer
+      key={dealId ?? "nessuna"}
+      origine={deal ? t("Offerta «{{titolo}}»", { titolo: deal.title }) : null}
+    >
       <SidePanel
         open={dealId !== null}
         onClose={requestClose}
@@ -91,6 +100,7 @@ export function DealDetailDrawer({ dealId, onClose }: DealDetailDrawerProps) {
             key={deal.id}
             deal={deal}
             onClose={onClose}
+            indietro={indietro ?? null}
             registerRequestClose={(fn) => (requestCloseRef.current = fn)}
           />
         ) : error ? (
@@ -138,10 +148,12 @@ function Unavailable({ error, onClose }: { error: unknown; onClose: () => void }
 function DrawerContent({
   deal,
   onClose,
+  indietro,
   registerRequestClose,
 }: {
   deal: DealDetail;
   onClose: () => void;
+  indietro: { etichetta: string; onClick: () => void } | null;
   /** Espone al contenitore la chiusura che offre il ripristino delle modifiche. */
   registerRequestClose?: (fn: () => void) => void;
 }) {
@@ -149,7 +161,8 @@ function DrawerContent({
   const confirm = useConfirm();
   const keepOrRevert = useKeepOrRevert();
   const toast = useToast();
-  const navigate = useNavigate();
+  const vaiA = useVaiA();
+  const location = useLocation();
   const updateDeal = useUpdateDeal();
   const deleteDeal = useDeleteDeal();
   const { data: stages } = useDealStages();
@@ -266,14 +279,24 @@ function DrawerContent({
   return (
     <>
       <header className="flex items-start justify-between gap-2 border-b p-4">
-        <input
-          className="w-full bg-transparent text-lg font-semibold outline-none focus:border-b"
-          aria-label={t("Titolo")}
-          readOnly={!canEdit}
-          {...title.props}
-        />
+        <div className="flex min-w-0 flex-1 flex-col">
+          {/* Da dove si è arrivati (un progetto, la scheda di un cliente…). */}
+          {indietro && (
+            <TornaIndietro
+              etichetta={indietro.etichetta}
+              onClick={indietro.onClick}
+              className="mb-0.5"
+            />
+          )}
+          <input
+            className="w-full bg-transparent text-lg font-semibold outline-none focus:border-b"
+            aria-label={t("Titolo")}
+            readOnly={!canEdit}
+            {...title.props}
+          />
+        </div>
         <div className="flex shrink-0 gap-1">
-          {canEdit && slot.LetturaAllegati && (
+          {canEdit && slot.LetturaAllegati && moduloAcceso(currentUser, "analisi-offerte") && (
             <slot.LetturaAllegati dealId={deal.id} allegati={deal.attachments} />
           )}
           {canDelete && (
@@ -320,7 +343,13 @@ function DrawerContent({
         {deal.projectId && (
           <button
             type="button"
-            onClick={() => navigate(`/progetti/${deal.projectId}`)}
+            onClick={() =>
+              vaiA(
+                `/progetti/${deal.projectId}`,
+                { etichetta: t("Offerta «{{titolo}}»", { titolo: deal.title }) },
+                quiConPannello(location, "deal", deal.id),
+              )
+            }
             className="mb-3 flex w-full cursor-pointer items-center gap-1.5 rounded-md bg-muted/60 px-3 py-2 text-left text-xs text-muted-foreground hover:bg-muted"
           >
             <FolderKanban className="size-3.5" />{" "}
@@ -494,7 +523,7 @@ function DrawerContent({
 
         {/* Espone l'offerta ai monitor vendite: finché è spenta, per loro non esiste.
             C'è con l'area investitori (08/10/2026). */}
-        {edizione.moduli.has("area-investitori") && (
+        {moduloAcceso(currentUser, "area-investitori") && (
           <label className="mt-4 flex items-start gap-2 rounded-md border p-3 text-sm">
             <input
               type="checkbox"
@@ -604,7 +633,7 @@ function LinkedTasksSection({ deal }: { deal: DealDetail }) {
   const { t } = useTranslation();
   const createTask = useCreateTask();
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
+  const apriTask = useOpenLinkedTask();
   const [title, setTitle] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [adding, setAdding] = useState(false);
@@ -655,7 +684,9 @@ function LinkedTasksSection({ deal }: { deal: DealDetail }) {
               type="button"
               className="flex w-full items-center gap-2 rounded-md border px-3 py-2 text-left text-sm hover:bg-muted/40"
               title={t("Apri il task nello scadenzario")}
-              onClick={() => navigate(`/bacheche?task=${task.id}`)}
+              // Sopra l'offerta, nello strato dei link: chiudendolo (o con
+              // «← Offerta …» accanto al titolo) si torna qui (21/10/2026).
+              onClick={() => apriTask(task.id)}
             >
               {task.isClosed ? (
                 <CheckCircle2 className="size-4 shrink-0 text-muted-foreground" />

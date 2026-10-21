@@ -4,7 +4,9 @@
 import cron from "node-cron";
 import { purgePendingInlineImages } from "./modules/rich-text/inline-images";
 import { buildApp } from "./app";
-import { moduliAttivi } from "./edition/registry";
+import { moduliDellEdizione } from "./edition/registry";
+import { avviaRiletturaFunzioni, cronCondizionato } from "./edition/funzioni";
+import { funzioneAttiva } from "./edition/funzioni-stato";
 import { config } from "./config";
 import { initDb, prisma } from "./db";
 import { sweepExpiredChallenges } from "./modules/auth/challenges";
@@ -138,7 +140,13 @@ async function main(): Promise<void> {
 
   // I lavori dei moduli dell'edizione (promemoria e assenze del timesheet,
   // indice dei modelli…): nella community nessuno.
-  for (const modulo of moduliAttivi()) modulo.job?.({ cron, app, tz });
+  // I lavori dei moduli: pianificati tutti, ma quello di un modulo spento salta
+  // il giro (17/10/2026). Lo stato delle funzioni si rilegge ogni minuto, per
+  // le scritture fatte da uno script o da un altro processo.
+  avviaRiletturaFunzioni((errore) => app.log.error(errore, "Rilettura delle funzioni fallita"));
+  for (const modulo of moduliDellEdizione()) {
+    modulo.job?.({ cron: cronCondizionato(cron, () => funzioneAttiva(modulo.nome)), app, tz });
+  }
 
   // Backup automatico giornaliero con retention: avvio (idempotente) + 02:30.
   const runBackup = async (label: string) => {

@@ -57,6 +57,12 @@ export interface NuovoTaskDaPlugin {
   dueDate?: string | null;
   statusId?: string | null;
   activityTypeId?: string | null;
+  /**
+   * L'offerta a cui il task è collegato (21/10/2026): un task dello scadenzario
+   * — la richiamata, l'invio del preventivo — legato a una trattativa. Il core
+   * controlla che chi crea veda le offerte e che l'id sia un'offerta.
+   */
+  relatedDealId?: string | null;
 }
 
 async function utenteValido(userId: string) {
@@ -92,6 +98,7 @@ export async function creaTaskPerPlugin(
     dueDate: input.dueDate ?? null,
     ...(input.statusId ? { statusId: input.statusId } : {}),
     activityTypeId: input.activityTypeId ?? null,
+    relatedDealId: input.relatedDealId ?? null,
   };
   // Le regole, gli stati, le notifiche e il registro sono di createTaskAs:
   // qui non se ne ricopia nessuna, e un rifiuto arriva con il suo messaggio.

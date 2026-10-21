@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
 import {
   ArrowUpRight,
   Building2,
@@ -14,6 +13,7 @@ import {
 } from "lucide-react";
 import { TaskKind, type TaskListItem } from "@kancrm/shared";
 import { AREAS } from "@/components/layout/areas";
+import { useVaiDallaPagina } from "@/lib/ritorno";
 
 /**
  * Di che natura è un task, per gli elenchi in cui i moduli si mescolano: il
@@ -58,7 +58,7 @@ const MODULE_META: Partial<Record<TaskKind, { icon: typeof Building2; label: str
  */
 function ProjectChip({ project }: { project: { id: string; name: string } }) {
   const { t } = useTranslation();
-  const navigate = useNavigate();
+  const vai = useVaiDallaPagina();
   return (
     <span className="flex min-w-0 items-center gap-1">
       <AREAS.projects.icon className="size-3 shrink-0" />
@@ -85,7 +85,7 @@ function ProjectChip({ project }: { project: { id: string; name: string } }) {
         onClick={(event) => {
           // La riga sotto apre il task: qui si va altrove, e va detto al click.
           event.stopPropagation();
-          navigate(`${AREAS.projects.to}/${project.id}`);
+          vai(`${AREAS.projects.to}/${project.id}`);
         }}
       >
         <ArrowUpRight className="size-3" />

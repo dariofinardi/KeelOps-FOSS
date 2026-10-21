@@ -48,6 +48,7 @@ export function dealsQueryString(filters: Partial<DealFilters>): string {
   if (filters.sortDir) params.set("sortDir", filters.sortDir);
   if (filters.stalled) params.set("stalled", filters.stalled);
   if (filters.months) params.set("months", filters.months);
+  if (filters.investors) params.set("investors", filters.investors);
   return params.toString();
 }
 

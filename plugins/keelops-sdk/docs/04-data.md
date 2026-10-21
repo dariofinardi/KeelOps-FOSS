@@ -101,6 +101,25 @@ const late = await ctx.db.all(
 
 Soft-deleted rows carry `deletedAt`: filter them out (`taskPerimeter` does).
 
+For **timesheet hours** there is `timeEntryPerimeter(user)`, a filter over
+`TimeEntry e`. Unlike the task one it is **not** conservative: it is the
+core's rule word for word (all hours for admins and for whoever sees every
+timesheet; otherwise one's own, those on supervised tasks and those of the
+projects one manages), because hours get added up and must match the app's
+totals. A test of the core runs both rules on the same database. Hours on
+tasks in the bin count, as in the core.
+
+```js
+const { where, params } = timeEntryPerimeter(user);
+const rows = await ctx.db.all(
+  `SELECT ${ctx.db.sql.dayOf("e.date")} AS day, SUM(e.hours) AS hours
+     FROM TimeEntry e
+    WHERE ${where} AND ${ctx.db.sql.dayOf("e.date")} BETWEEN ? AND ?
+    GROUP BY day`,
+  ...params, "2026-09-01", "2026-09-30",
+);
+```
+
 ## Owning tables
 
 Declare a `nick` in the manifest and the plugin **owns** the tables named

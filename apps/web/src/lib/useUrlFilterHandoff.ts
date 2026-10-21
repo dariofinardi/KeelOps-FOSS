@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
 import { useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 
 /**
  * Consegna di filtri da una pagina all'altra tramite l'indirizzo.
@@ -20,6 +20,7 @@ export function useUrlFilterHandoff(
   apply: (values: Record<string, string>) => void,
 ): void {
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
   const present = names
     .map((name) => [name, searchParams.get(name)] as const)
     .filter((entry): entry is readonly [string, string] => entry[1] !== null);
@@ -31,7 +32,9 @@ export function useUrlFilterHandoff(
     if (signature === "") return;
     apply(Object.fromEntries(new URLSearchParams(signature)));
     for (const name of names) searchParams.delete(name);
-    setSearchParams(searchParams, { replace: true });
+    // Lo stato della navigazione resta: porta «da dove si arriva» (lib/ritorno.ts),
+    // e togliere un parametro non deve togliere la strada di casa.
+    setSearchParams(searchParams, { replace: true, state: location.state as unknown });
     // `apply` cambia a ogni render nei chiamanti: la dipendenza vera è la firma.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signature]);

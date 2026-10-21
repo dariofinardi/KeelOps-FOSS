@@ -18,6 +18,7 @@ import {
   weeklyFlow,
   type ClosedTask,
 } from "./dev-metrics";
+import { funzioneAttiva } from "../../edition/funzioni-stato";
 
 /**
  * I numeri del pannello **L'andamento** ("La mia giornata").
@@ -337,6 +338,8 @@ export async function governsDevArea(user: User): Promise<boolean> {
  * tenere allineato sarebbe la solita seconda verità.
  */
 export async function canSeeDevMetrics(user: User): Promise<boolean> {
+  // Il pannello spento per l'installazione (17/10/2026): non lo vede nessuno.
+  if (!funzioneAttiva("andamento")) return false;
   if (user.role === UserRole.PORTAL || user.role === UserRole.SALES_MONITOR) return false;
   if (await governsDevArea(user)) return true;
   return (await devAreaMembers()).some((member) => member.id === user.id);

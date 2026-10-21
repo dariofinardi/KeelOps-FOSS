@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
 import type { Prisma, Task, User } from "../../generated/prisma/client";
-import { moduliAttivi } from "../../edition/registry";
+import { moduliDellEdizione } from "../../edition/registry";
 
 /**
  * **Gli agganci dei moduli dell'edizione nel ciclo di vita dei task**
@@ -65,9 +65,15 @@ export interface AgganciTask {
 
 let impostati: readonly AgganciTask[] | null = null;
 
-/** Gli agganci dei moduli attivi (o di quelli dell'edizione configurata, fuori da `buildApp`). */
+/**
+ * Gli agganci dei moduli dell'edizione, accesi o spenti (17/10/2026): agiscono
+ * solo sui task dei loro tipi, e un modulo riacceso deve ritrovarli senza
+ * riavvio. Vedi `plan/funzioni-istanza.md`, «Limiti».
+ */
 export function agganciTask(): readonly AgganciTask[] {
-  return (impostati ??= moduliAttivi().flatMap((m) => (m.agganciTask ? [m.agganciTask] : [])));
+  return (impostati ??= moduliDellEdizione().flatMap((m) =>
+    m.agganciTask ? [m.agganciTask] : [],
+  ));
 }
 
 export function impostaAgganciTask(agganci: readonly AgganciTask[]): void {

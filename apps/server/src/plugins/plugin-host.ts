@@ -21,8 +21,14 @@ import { SESSION_COOKIE, findSessionUser } from "../modules/auth/session";
 import { leggiPubblici } from "./plugin-public";
 import { caricaStatoPlugin, pluginDisattivato } from "./plugin-stato";
 import { localeFromRequest, serverT } from "../i18n";
-import { leggiAllegatoPerPlugin, puoModificareTaskPerPlugin, scriviAllegatoPerPlugin } from "./plugin-attachments";
+import {
+  leggiAllegatoPerPlugin,
+  puoModificareTaskPerPlugin,
+  scriviAllegatoPerPlugin,
+} from "./plugin-attachments";
 import { creaTaskPerPlugin, leggiTaskPerPlugin, leggiTaskPerPluginMolti } from "./plugin-tasks";
+import { aggiornaTaskPerPlugin, portaCrm, portaOfferte } from "./plugin-crm";
+import { conCanale } from "../lib/canale";
 import { edizioneInVigore, haModulo, portaPlugin } from "../edition/registry";
 import { funzioniDellEdizione, rifiutoPerEdizione } from "../edition/plugin-edition";
 import { inviaEmailPerPlugin, postaAttivaPerPlugin } from "./plugin-mail";
@@ -71,7 +77,6 @@ export function parsePluginNames(spec: string): string[] {
     .map((s) => s.trim())
     .filter(Boolean)) {
     if (!/^[A-Za-z0-9_-]+$/.test(entry)) {
-      // eslint-disable-next-line no-console
       console.warn(`PLUGINS: voce ignorata perché malformata: "${entry}" (atteso solo il nome)`);
       continue;
     }
@@ -112,6 +117,11 @@ const importOutside = (p: string) =>
 interface Manifest {
   nome?: string;
   titolo?: string;
+  /**
+   * Come il plugin compare nella cronologia di ciò che scrive a nome di una
+   * persona: «Maria Rossi via MCP» (21/10/2026). Senza, il titolo.
+   */
+  canale?: string;
   versione?: string;
   /** Il proprietario delle tabelle `plugin_<nick>_…`; senza, il plugin non scrive. */
   nick?: string;
@@ -197,6 +207,21 @@ function chiede(manifest: Manifest, permesso: string): boolean {
   return Array.isArray(manifest.permessi) && manifest.permessi.map(String).includes(permesso);
 }
 
+/**
+ * La porta del timesheet per un manifesto: intera con `timesheet:write`, la
+ * sola lettura con `timesheet:read` — chi chiede di leggere non riceve una
+ * funzione che scrive. `null` senza permesso o senza il modulo.
+ */
+export function portaTimesheet(manifest: Manifest): unknown {
+  const porta = portaPlugin("timesheet") as Record<string, unknown> | null;
+  if (!porta) return null;
+  if (chiede(manifest, "timesheet:write")) return porta;
+  if (chiede(manifest, "timesheet:read")) {
+    return { quadro: porta.quadro ?? null, meseChiuso: porta.meseChiuso ?? null };
+  }
+  return null;
+}
+
 function chiedeGoogle(manifest: Manifest): boolean {
   return chiede(manifest, "google:oauth");
 }
@@ -220,18 +245,30 @@ function leggiBarra(
   const stato = String(b.stato ?? "");
   const pannello = String(b.pannello ?? "");
   const icona = String(b.icona ?? "puzzle");
-  for (const [campo, valore] of [["stato", stato], ["pannello", pannello]] as const) {
+  for (const [campo, valore] of [
+    ["stato", stato],
+    ["pannello", pannello],
+  ] as const) {
     if (!PERCORSO_RELATIVO.test(valore) || valore.includes("..")) {
-      avvisa(`plugin "${name}": ui.barra.${campo} "${valore}" non è un percorso valido, niente bottone`);
+      avvisa(
+        `plugin "${name}": ui.barra.${campo} "${valore}" non è un percorso valido, niente bottone`,
+      );
       return null;
     }
   }
   let iconaUrl: string | null = null;
   if (/\.(svg|png)$/i.test(icona)) {
-    if (PERCORSO_RELATIVO.test(icona) && !icona.includes("..") && staticDir && existsSync(path.join(staticDir, icona))) {
+    if (
+      PERCORSO_RELATIVO.test(icona) &&
+      !icona.includes("..") &&
+      staticDir &&
+      existsSync(path.join(staticDir, icona))
+    ) {
       iconaUrl = `/plugins/${name}/${icona}`;
     } else {
-      avvisa(`plugin "${name}": ui.barra.icona "${icona}" non esiste nella cartella statica, uso il puzzle`);
+      avvisa(
+        `plugin "${name}": ui.barra.icona "${icona}" non esiste nella cartella statica, uso il puzzle`,
+      );
     }
   }
   return {
@@ -450,7 +487,10 @@ function schedaDi(
  * Si legge solo `manifest.json`: importare il codice di un plugin non
  * installato per sapere come si chiama sarebbe già eseguirlo.
  */
-function nonInstallati(pluginsDir: string, occupati: Set<string>): Array<Omit<PluginScheda, "attivo">> {
+function nonInstallati(
+  pluginsDir: string,
+  occupati: Set<string>,
+): Array<Omit<PluginScheda, "attivo">> {
   const out: Array<Omit<PluginScheda, "attivo">> = [];
   let cartelle: string[] = [];
   try {
@@ -540,7 +580,9 @@ export async function registerPluginHost(
    * Gli script che l'SDK dà al browser. Il guscio li serve come file perché la
    * CSP di produzione non esegue niente di inline (vedi la rotta `sdk/:file`).
    */
-  const sdkUi = (await importOutside(pathToFileURL(path.join(sdkDir, "ui.mjs")).href)) as unknown as {
+  const sdkUi = (await importOutside(
+    pathToFileURL(path.join(sdkDir, "ui.mjs")).href,
+  )) as unknown as {
     TEMA_SCRIPT: string;
     FRAME_RESIZE_SCRIPT: string;
     TRADUZIONI_SCRIPT: string;
@@ -644,6 +686,8 @@ export async function registerPluginHost(
       }
       const nick = manifest.nick ?? null;
       const mountPrevisto = montaggio(manifest, name);
+      // Il nome del canale nella cronologia delle scritture del plugin (lib/canale.ts).
+      const canale = String(manifest.canale ?? manifest.titolo ?? name).slice(0, 40);
       const db = await driverPerIlPlugin(nick);
       // `create` può essere asincrona: il pro carica la base da ctx.pluginsDir
       const def = (await mod.create!({
@@ -683,11 +727,22 @@ export async function registerPluginHost(
         // I task, con le regole del core (plugin-tasks.ts): dal 22/09/2026, per
         // i plugin che generano lavoro — un'azione correttiva, una verifica.
         tasks: {
+          // Nel canale del plugin: la cronologia del task dice da dove è nato.
           create: (userId: string, input: Parameters<typeof creaTaskPerPlugin>[2]) =>
-            creaTaskPerPlugin(nick, userId, input),
+            conCanale(canale, () => creaTaskPerPlugin(nick, userId, input)),
           read: leggiTaskPerPlugin,
           readMany: leggiTaskPerPluginMolti,
+          // Modificare, con `tasks:write` (21/10/2026, plugin-crm.ts).
+          update: chiede(manifest, "tasks:write") ? aggiornaTaskPerPlugin(canale) : null,
         },
+        /**
+         * **Offerte e rubrica per scrivere** (21/10/2026, plugin-crm.ts): con
+         * `deals:write` creare e modificare le offerte, con `contacts:write`
+         * aziende e persone di riferimento. Le regole sono quelle delle pagine,
+         * l'utente è quello efficace, la cronologia dice il canale.
+         */
+        offerte: chiede(manifest, "deals:write") ? portaOfferte(canale) : null,
+        crm: chiede(manifest, "contacts:write") ? portaCrm(canale) : null,
         /**
          * I gruppi (plugin-groups.ts): un plugin che governa un mestiere deve
          * poter dire **chi lo fa**. Crea il suo gruppo una volta, marcato col
@@ -722,12 +777,14 @@ export async function registerPluginHost(
             pushSse(userId, { ...dati, kind: "plugin", plugin: mountPrevisto }),
         },
         /**
-         * **Le ore nel timesheet** (commercial/plugin-timesheet.ts), solo a chi le chiede
-         * con `timesheet:write`: si sommano a quelle scritte a mano, con le
-         * regole della griglia. Dal 29/09/2026, per i rapportini.
+         * **Il timesheet** (commercial/plugin-timesheet.ts). Con `timesheet:write`
+         * la porta intera: le ore si sommano a quelle scritte a mano, con le
+         * regole della griglia (dal 29/09/2026, per i rapportini). Con il solo
+         * `timesheet:read` la lettura: il quadro del mese e se è chiuso (dal
+         * 14/10/2026, per i report del connettore MCP).
          */
         // La presta il modulo timesheet: nella community vale `null` anche a chi la chiede.
-        timesheet: chiede(manifest, "timesheet:write") ? portaPlugin("timesheet") : null,
+        timesheet: portaTimesheet(manifest),
         /**
          * **La posta del core** (plugin-mail.ts), solo con `mail:send`: il
          * messaggio esce col canale e il marchio di KeelOps, e la risposta
@@ -737,13 +794,14 @@ export async function registerPluginHost(
           ? { invia: inviaEmailPerPlugin, attiva: postaAttivaPerPlugin }
           : null,
         // Only with the commercial `google` module: in the community `null`.
-        google: chiedeGoogle(manifest) && haModulo("google")
-          ? {
-              enabled: config.oauth.google.enabled,
-              clientId: config.oauth.google.clientId,
-              clientSecret: config.oauth.google.clientSecret,
-            }
-          : null,
+        google:
+          chiedeGoogle(manifest) && haModulo("google")
+            ? {
+                enabled: config.oauth.google.enabled,
+                clientId: config.oauth.google.clientId,
+                clientSecret: config.oauth.google.clientSecret,
+              }
+            : null,
       })) as PluginDefinition;
       if (nick) await preparaTabelle(name, manifest, def, db as SdkDriver, sdkDb);
       if (typeof def.riepilogoMattutino === "function")
@@ -768,7 +826,6 @@ export async function registerPluginHost(
       wellKnown = def.wellKnown ?? [];
     } catch (err) {
       app.log.error(`plugin "${name}" non caricato: ${(err as Error).message}`);
-      // eslint-disable-next-line no-console
       console.error(`[plugin-host] "${name}":`, err);
       continue;
     }
@@ -811,12 +868,14 @@ export async function registerPluginHost(
           const { file } = request.params as { file: string };
           const corpo = scriptSdk[file];
           if (corpo === undefined) return reply.status(404).send({ error: "NOT_FOUND" });
-          return reply
-            .header("content-type", "text/javascript; charset=utf-8")
-            // Cambiano con l'SDK, cioè con un rilascio: un'ora è un compromesso
-            // fra il non richiederli a ogni apertura e il non tenerseli vecchi.
-            .header("cache-control", "public, max-age=3600")
-            .send(corpo);
+          return (
+            reply
+              .header("content-type", "text/javascript; charset=utf-8")
+              // Cambiano con l'SDK, cioè con un rilascio: un'ora è un compromesso
+              // fra il non richiederli a ogni apertura e il non tenerseli vecchi.
+              .header("cache-control", "public, max-age=3600")
+              .send(corpo)
+          );
         });
 
         /**
@@ -829,13 +888,18 @@ export async function registerPluginHost(
         scope.addHook("onRequest", async (request, reply) => {
           if (!pluginDisattivato(mount)) return;
           const locale = localeFromRequest(request);
-          const messaggio = serverT(locale, "Questo plugin è disattivato: lo riaccende un amministratore da Sistema.");
+          const messaggio = serverT(
+            locale,
+            "Questo plugin è disattivato: lo riaccende un amministratore da Sistema.",
+          );
           const vuoleHtml = String(request.headers.accept ?? "").includes("text/html");
           if (vuoleHtml) {
             return reply
               .status(404)
               .type("text/html; charset=utf-8")
-              .send(`<!doctype html><meta charset="utf-8"><title>${mount}</title><p style="font:14px system-ui;margin:2rem">${messaggio}</p>`);
+              .send(
+                `<!doctype html><meta charset="utf-8"><title>${mount}</title><p style="font:14px system-ui;margin:2rem">${messaggio}</p>`,
+              );
           }
           return reply.status(404).send({ error: "PLUGIN_DISABLED", message: messaggio });
         });
@@ -914,11 +978,13 @@ export async function registerPluginHost(
       user?.role === UserRole.ADMIN || request.authUser?.role === UserRole.ADMIN;
     const plugins = await Promise.all(
       // un plugin spento sparisce dal menù e dalle ancore, per tutti
-      mounted.filter((voce) => !pluginDisattivato(voce.nome)).map(async (voce) => {
-        if (!voce.soloGruppo || !voce.nick || !user) return voce;
-        const dentro = amministratore || (await utenteNelGruppoDelPlugin(voce.nick, user.id));
-        return { ...voce, nelGruppo: dentro };
-      }),
+      mounted
+        .filter((voce) => !pluginDisattivato(voce.nome))
+        .map(async (voce) => {
+          if (!voce.soloGruppo || !voce.nick || !user) return voce;
+          const dentro = amministratore || (await utenteNelGruppoDelPlugin(voce.nick, user.id));
+          return { ...voce, nelGruppo: dentro };
+        }),
     );
     return { plugins };
   });

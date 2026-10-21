@@ -48,8 +48,10 @@ import type { ComponentType } from "react";
 import { iconaDelPlugin } from "@/features/plugins/plugin-icon";
 import { AREAS } from "./areas";
 import { usePlugins } from "@/features/plugins/usePlugins";
-import { edizione } from "@/edition/rotte";
+import { funzioneAccesa, moduloAcceso } from "@/lib/funzioni";
 import { disponiVoci } from "@/features/plugins/nav-placement";
+import { useRitorno } from "@/lib/ritorno";
+import { TornaIndietro } from "@/components/ui/torna-indietro";
 
 /** Voce di menù: area (rotta, etichetta, icona) più le condizioni di visibilità. */
 interface NavEntry {
@@ -64,21 +66,27 @@ interface NavEntry {
   managerOnly?: boolean;
   /** La voce porta a una pagina di un modulo dell'edizione: c'è solo se c'è il modulo. */
   modulo?: string;
+  /** La voce porta a un'area del nucleo che l'installazione può spegnere (17/10/2026). */
+  funzione?: string;
 }
 
-/** La voce c'è in questa edizione: del nucleo, o di un modulo presente. */
-const nellEdizione = (item: { modulo?: string }) =>
-  !item.modulo || edizione.moduli.has(item.modulo);
+/**
+ * La voce c'è in questa installazione: un modulo che l'edizione porta e che non
+ * è spento, un'area del nucleo accesa (vedi `lib/funzioni.ts`).
+ */
+const presente = (user: Pick<CurrentUser, "funzioniSpente">) => (item: NavEntry) =>
+  (!item.modulo || moduloAcceso(user, item.modulo)) &&
+  (!item.funzione || funzioneAccesa(user, item.funzione));
 
 // Rotte e icone vengono da `AREAS` (unico punto, condiviso con i collegamenti
 // sparsi per l'applicazione); qui si aggiunge solo ciò che riguarda il menù.
 const navItems: NavEntry[] = [
   { ...AREAS.home, end: true },
   AREAS.tasks,
-  { ...AREAS.deals, dealsOnly: true },
-  AREAS.projects,
+  { ...AREAS.deals, dealsOnly: true, funzione: "offerte" },
+  { ...AREAS.projects, funzione: "progetti" },
   { ...AREAS.tickets, ticketsOnly: true, modulo: "ticket" },
-  AREAS.timesheet,
+  { ...AREAS.timesheet, funzione: "ore" },
   AREAS.contacts,
   // Chi guida un gruppo o un progetto: la coda è una risorsa condivisa e lenta,
   // e va sorvegliata da chi guida del lavoro.
@@ -99,7 +107,7 @@ const adminItems: Array<NavEntry> = [
   { to: "/customer-care", label: "Utenti customer care", icon: Headset, modulo: "ticket" },
   { to: "/gruppi", label: "Gruppi", icon: Workflow },
   { to: "/stati", label: "Stati task", icon: Tags },
-  { to: "/fasi", label: "Fasi pipeline", icon: Kanban },
+  { to: "/fasi", label: "Fasi pipeline", icon: Kanban, funzione: "offerte" },
   { to: "/aspetto", label: "Aspetto", icon: Palette },
   { to: "/email", label: "Email e Calendari", icon: Mail },
   { to: "/cestino", label: "Cestino", icon: Trash2 },
@@ -171,7 +179,7 @@ function NavContent({ user, onNavigate }: { user: CurrentUser; onNavigate?: () =
       */}
       {disponiVoci(
         navItems
-          .filter(nellEdizione)
+          .filter(presente(user))
           .filter(
             (item) =>
               (!("dealsOnly" in item) ||
@@ -241,7 +249,7 @@ function NavContent({ user, onNavigate }: { user: CurrentUser; onNavigate?: () =
               */}
               {disponiVoci(
                 adminItems
-                  .filter(nellEdizione)
+                  .filter(presente(user))
                   .filter(
                     (item) =>
                       isAdmin ||
@@ -582,6 +590,7 @@ export function AppShell() {
                 <NewTaskDialog open={newTaskOpen} onClose={() => setNewTaskOpen(false)} />
               )}
               <main className="flex-1 overflow-auto p-4 md:p-6">
+                <RitornoDiPagina />
                 <Outlet />
               </main>
               {/* In basso al centro: i pannelli si aprono a destra e i filtri stanno
@@ -595,4 +604,15 @@ export function AppShell() {
       </DealFromTaskProvider>
     </DocumentReaderProvider>
   );
+}
+
+/**
+ * **«← Da dove si arriva», in cima alla pagina** (21/10/2026): dopo un salto da
+ * un pannello o da un contatore a un'altra pagina (`lib/ritorno.ts`). Se si
+ * arriva su un pannello, il ritorno sta nel pannello e qui non compare.
+ */
+function RitornoDiPagina() {
+  const ritorno = useRitorno();
+  if (!ritorno) return null;
+  return <TornaIndietro etichetta={ritorno.etichetta} onClick={ritorno.torna} className="mb-3" />;
 }

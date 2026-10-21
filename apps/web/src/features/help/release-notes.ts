@@ -44,6 +44,34 @@ export interface ReleaseNote {
 /** Dalla più recente. */
 export const RELEASE_NOTES: ReleaseNote[] = [
   {
+    version: "0.15.75",
+    date: "2026-10-21",
+    items: [
+      "Changing a task opened from a deal (or a subtask opened from its parent) shows the change at once in the panel below when you go back: title, due date, status, or the task gone if you deleted it.",
+    ],
+  },
+  {
+    version: "0.12.72",
+    date: "2026-10-21",
+    items: [
+      "Wherever a link takes you — a task from a deal, a deal from a project, a project from a task, a customer's deals from its card — a “← back to …” button next to the title brings you back to exactly what you were looking at. A deal's tasks and a deal's next step now open on top of the deals page instead of leaving it.",
+    ],
+  },
+  {
+    version: "0.12.71",
+    date: "2026-10-21",
+    items: [
+      "Linking a contact to a company that does not exist now says so, instead of failing with a generic error.",
+    ],
+  },
+  {
+    version: "0.12.70",
+    date: "2026-10-17",
+    items: [
+      "Administrators can switch off, from the System page, the areas this installation does not use — deals, projects, contacts, hours, the technical trend — and each module of the edition. A switched-off area disappears for everyone, menu, pages and group permissions included; its data stays, and switching it back on brings it back as it was, with no restart.",
+    ],
+  },
+  {
     version: "0.12.68",
     date: "2026-10-08",
     items: [

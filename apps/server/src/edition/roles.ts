@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
 import { UserRole } from "@kancrm/shared";
-import { moduliAttivi, politicheDei } from "./registry";
+import { moduliDellEdizione, politicheDei } from "./registry";
 
 /**
  * **Cosa può fare un ruolo che non è del nucleo** (08/10/2026). Il nucleo
@@ -39,7 +39,7 @@ let impostate: Map<string, PoliticaRuolo> | null = null;
  * moduli dell'edizione configurata.
  */
 function politiche(): Map<string, PoliticaRuolo> {
-  return (impostate ??= new Map(politicheDei(moduliAttivi())));
+  return (impostate ??= new Map(politicheDei(moduliDellEdizione())));
 }
 
 /** Le politiche dei moduli attivi; le chiama `buildApp` prima di registrare le rotte. */

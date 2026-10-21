@@ -247,6 +247,9 @@ export function dealRoutes(app: FastifyInstance): void {
     const filters = dealFiltersSchema.parse(request.query);
     const perimetro = dealOwnerWhere(filters.owner, user.id);
     const perMese = dealMonthsWhere(parseDealMonths(filters.months));
+    // Solo quelle condivise con gli investitori (21/10/2026).
+    const perInvestitori: Prisma.TaskWhereInput | null =
+      filters.investors === "shared" ? { visibleToSalesMonitors: true } : null;
     // Base: tutti i filtri tranne quello sul valore, che ha bisogno della media
     // calcolata proprio su questo insieme (la media "di ciò che stai guardando",
     // non di tutte le offerte esistenti).
@@ -269,12 +272,13 @@ export function dealRoutes(app: FastifyInstance): void {
       // Dentro `AND` e non steso qui: la ricerca sopra usa già un `OR`, e due
       // `OR` fratelli si sovrascrivono (CLAUDE.md, «trappole già pagate»).
       // Nello stesso `AND` il filtro «Ferme», che di `OR` ne ha anche lui.
-      ...(perimetro || filters.stalled || perMese
+      ...(perimetro || filters.stalled || perMese || perInvestitori
         ? {
             AND: [
               ...(perimetro ? [perimetro] : []),
               ...(filters.stalled ? [offerteFermeWhere(filters.stalled, oggi)] : []),
               ...(perMese ? [perMese] : []),
+              ...(perInvestitori ? [perInvestitori] : []),
             ],
           }
         : {}),
@@ -407,39 +411,64 @@ export function dealRoutes(app: FastifyInstance): void {
      */
     const whereSenzaFerme: Prisma.TaskWhereInput = {
       ...where,
-      AND: [...(perimetro ? [perimetro] : []), ...(perMese ? [perMese] : [])],
+      AND: [
+        ...(perimetro ? [perimetro] : []),
+        ...(perMese ? [perMese] : []),
+        ...(perInvestitori ? [perInvestitori] : []),
+      ],
+    };
+    /** Le condivise con gli investitori, con tutti i filtri tranne il proprio. */
+    const whereSenzaInvestitori: Prisma.TaskWhereInput = {
+      ...where,
+      AND: [
+        ...(perimetro ? [perimetro] : []),
+        ...(filters.stalled ? [offerteFermeWhere(filters.stalled, oggi)] : []),
+        ...(perMese ? [perMese] : []),
+        { visibleToSalesMonitors: true },
+      ],
     };
     const contaFerme = (filtro: "tutte" | "senzaPasso" | "passoScaduto" | "chiusuraPassata") =>
       prisma.task.count({ where: { AND: [whereSenzaFerme, offerteFermeWhere(filtro, oggi)] } });
 
-    const [deals, total, valueSum, byCompany, byStage, companies, stages, ferme, dateMesi] =
-      await Promise.all([
-        caricaPagina(),
-        prisma.task.count({ where }),
-        // Somma nominale dell'insieme filtrato, tutte le pagine: la tabella la
-        // mostra sotto l'intestazione Valore. Nessun peso: è la colonna, sommata.
-        prisma.task.aggregate({ where, _sum: { dealValue: true } }),
-        prisma.task.groupBy({ by: ["companyId"], where: facetWhere, _count: { _all: true } }),
-        prisma.task.groupBy({ by: ["dealStageId"], where: facetWhere, _count: { _all: true } }),
-        prisma.company.findMany({ select: { id: true, name: true } }),
-        prisma.dealStage.findMany({ select: { id: true, name: true, order: true } }),
-        Promise.all([
-          contaFerme("tutte"),
-          contaFerme("senzaPasso"),
-          contaFerme("passoScaduto"),
-          contaFerme("chiusuraPassata"),
-        ]).then(([tutte, senzaPasso, passoScaduto, chiusuraPassata]) => ({
-          tutte,
-          senzaPasso,
-          passoScaduto,
-          chiusuraPassata,
-        })),
-        // I mesi presenti: due date per offerta, raggruppate qui con la regola condivisa.
-        prisma.task.findMany({
-          where: facetWhere,
-          select: { closedAt: true, expectedCloseDate: true },
-        }),
-      ]);
+    const [
+      deals,
+      total,
+      valueSum,
+      byCompany,
+      byStage,
+      companies,
+      stages,
+      ferme,
+      dateMesi,
+      condivise,
+    ] = await Promise.all([
+      caricaPagina(),
+      prisma.task.count({ where }),
+      // Somma nominale dell'insieme filtrato, tutte le pagine: la tabella la
+      // mostra sotto l'intestazione Valore. Nessun peso: è la colonna, sommata.
+      prisma.task.aggregate({ where, _sum: { dealValue: true } }),
+      prisma.task.groupBy({ by: ["companyId"], where: facetWhere, _count: { _all: true } }),
+      prisma.task.groupBy({ by: ["dealStageId"], where: facetWhere, _count: { _all: true } }),
+      prisma.company.findMany({ select: { id: true, name: true } }),
+      prisma.dealStage.findMany({ select: { id: true, name: true, order: true } }),
+      Promise.all([
+        contaFerme("tutte"),
+        contaFerme("senzaPasso"),
+        contaFerme("passoScaduto"),
+        contaFerme("chiusuraPassata"),
+      ]).then(([tutte, senzaPasso, passoScaduto, chiusuraPassata]) => ({
+        tutte,
+        senzaPasso,
+        passoScaduto,
+        chiusuraPassata,
+      })),
+      // I mesi presenti: due date per offerta, raggruppate qui con la regola condivisa.
+      prisma.task.findMany({
+        where: facetWhere,
+        select: { closedAt: true, expectedCloseDate: true },
+      }),
+      prisma.task.count({ where: whereSenzaInvestitori }),
+    ]);
 
     const companyName = new Map(companies.map((c) => [c.id, c.name]));
     const stageById = new Map(stages.map((s) => [s.id, s]));
@@ -464,6 +493,7 @@ export function dealRoutes(app: FastifyInstance): void {
         .map(({ id, name, count }) => ({ id, name, count })),
       stalled: ferme,
       months: dealMonthFacet(dateMesi),
+      sharedWithInvestors: condivise,
     };
     const items = deals.map((deal) => toDealListItem(deal, canEditDeal(user, deal, access)));
     return {
@@ -617,269 +647,12 @@ export function dealRoutes(app: FastifyInstance): void {
   });
 
   app.post("/api/deals", async (request, reply) => {
-    const user = requireUser(request);
-    const access = await accessForScope(user, VisibilityScope.DEALS);
-    // Creare richiede accesso completo: la sola lettura (es. Amministrativo) no.
-    if (user.role !== UserRole.ADMIN && access !== VisibilityAccess.FULL) {
-      throw forbidden("Hai accesso alle offerte in sola lettura");
-    }
-    const input = createDealSchema.parse(request.body);
-    await assertValidDealOwner(input.assigneeId);
-
-    const deal = await creaOfferta(input, user);
-    const full = await loadDeal(deal.id);
-    return reply
-      .status(201)
-      .send(toDealDetail(full, canEditDeal(user, full, access), await taskAccessContext(user)));
+    return reply.status(201).send(await creaOffertaPer(requireUser(request), request.body));
   });
 
   app.patch("/api/deals/:id", async (request) => {
-    const user = requireUser(request);
-    await assertCanSeeDeals(user);
-    const access = await accessForScope(user, VisibilityScope.DEALS);
     const { id } = request.params as { id: string };
-    const input = updateDealSchema.parse(request.body);
-    if (input.assigneeId !== undefined) await assertValidDealOwner(input.assigneeId);
-    const existing = await loadDeal(id);
-    /** Riempito solo se la lettura degli allegati non è ripartita perché c'era già. */
-    let avvisoAnalisi: EsitoOffertaVinta["analysisNotice"] = null;
-    /** Com'è andata la messa in lettura, per dirlo a chi ha spostato l'offerta. */
-    let statoAnalisi: EsitoOffertaVinta["analysisState"] = null;
-    // Modifica solo per l'ADMIN o il proprietario (con accesso completo).
-    if (!canEditDeal(user, existing, access)) {
-      throw forbidden("Solo il proprietario dell'offerta può modificarla");
-    }
-
-    // Cambio commerciale e valore: tracciati come lo stato, con i nomi risolti ora.
-    const entries: Array<{ action: string; payload: { from: unknown; to: unknown } }> = [];
-    if (input.assigneeId !== undefined && input.assigneeId !== existing.assigneeId) {
-      const nameOf = async (id: string | null) =>
-        id ? ((await prisma.user.findUnique({ where: { id } }))?.name ?? null) : null;
-      entries.push({
-        action: "assignee_changed",
-        payload: { from: await nameOf(existing.assigneeId), to: await nameOf(input.assigneeId) },
-      });
-    }
-    if (input.dealValue !== undefined && input.dealValue !== existing.dealValue) {
-      entries.push({
-        action: "value_changed",
-        payload: { from: existing.dealValue, to: input.dealValue ?? null },
-      });
-    }
-    if (
-      input.expectedCloseDate !== undefined &&
-      parseDateOnly(input.expectedCloseDate)?.getTime() !== existing.expectedCloseDate?.getTime()
-    ) {
-      entries.push({
-        action: "due_changed",
-        payload: {
-          from: toDateOnly(existing.expectedCloseDate),
-          to: input.expectedCloseDate ?? null,
-        },
-      });
-    }
-
-    let stageChange: { from: string; to: string } | undefined;
-    let newStageWon = false;
-    let notifyStageEvent = false;
-    // Data di chiusura effettiva: quando l'offerta entra in una fase vinta o persa
-    // è **quel giorno** che conta, non la chiusura prevista a suo tempo. Serve ai
-    // conti della previsione, che altrimenti metterebbero un affare concluso a
-    // luglio nel mese in cui si sperava di chiuderlo.
-    let closedAt: Date | null | undefined;
-    // la fase in cui l'offerta sarà dopo questa modifica: serve alla data di chiusura a mano
-    let faseFinale = existing.dealStage;
-    if (input.stageId && input.stageId !== existing.dealStageId) {
-      const newStage = await prisma.dealStage.findUnique({ where: { id: input.stageId } });
-      if (!newStage) throw badRequest("Fase non valida");
-      faseFinale = newStage;
-      stageChange = { from: existing.dealStage!.name, to: newStage.name };
-      newStageWon = newStage.isWon;
-      notifyStageEvent = newStage.isWon || newStage.isLost;
-      // Tornando in una fase aperta l'offerta è di nuovo in gioco: la data va tolta.
-      closedAt = notifyStageEvent ? new Date() : null;
-    }
-
-    /**
-     * **La data di chiusura corretta a mano** (01/10/2026): solo un super admin,
-     * solo su un'offerta vinta o persa. Mezzogiorno UTC, come la convenzione
-     * delle date di chiusura (`scripts/set-deal-closed-date.ts`): il giorno
-     * resta quello in qualunque fuso. Lascia traccia in cronologia.
-     */
-    if (input.closedAt !== undefined) {
-      if (!isElevated(user)) throw forbidden("La data di chiusura la corregge un super admin");
-      if (!faseFinale?.isWon && !faseFinale?.isLost) {
-        throw badRequest("La data di chiusura vale solo per un'offerta vinta o persa");
-      }
-      closedAt = new Date(`${input.closedAt}T12:00:00.000Z`);
-      const prima = toDateOnly(existing.closedAt);
-      if (prima !== input.closedAt) {
-        entries.push({
-          action: "closed_date_changed",
-          payload: { from: prima, to: input.closedAt },
-        });
-      }
-    }
-
-    /**
-     * **La probabilità** (01/10/2026): ogni cambio resta in cronologia, come il
-     * valore e la chiusura prevista — sono i tre numeri della previsione. E
-     * un'offerta che diventa vinta va al **100%**: la previsione la contava già
-     * per intero, ma il campo continuava a dire la stima di prima.
-     */
-    const probability = newStageWon ? 100 : input.probability;
-    if (probability !== undefined && probability !== existing.probability) {
-      entries.push({
-        action: "probability_changed",
-        payload: { from: existing.probability, to: probability },
-      });
-    }
-
-    // Presa in carico: la prima modifica a un'offerta senza assegnatario la
-    // assegna a chi la sta lavorando, come già avviene per i task dello
-    // scadenzario. Non scatta se l'assegnatario viene impostato esplicitamente.
-    const autoAssign = existing.assigneeId === null && input.assigneeId === undefined;
-
-    /**
-     * **Il resto dei campi, in cronologia** (06/10/2026): prima restavano fuori
-     * titolo, descrizione, cliente, contatto, motivo della perdita, la
-     * condivisione con gli investitori e la presa in carico automatica — un'offerta
-     * poteva cambiare cliente o diventare visibile da fuori senza lasciare traccia.
-     * Della descrizione si dice che è cambiata, non il testo: può essere lunga e
-     * l'ha già chi apre l'offerta.
-     */
-    if (input.title !== undefined && input.title !== existing.title) {
-      entries.push({ action: "renamed", payload: { from: existing.title, to: input.title } });
-    }
-    if (input.description !== undefined && (input.description ?? null) !== existing.description) {
-      entries.push({ action: "description_changed", payload: { from: null, to: null } });
-    }
-    if (input.companyId !== undefined && (input.companyId ?? null) !== existing.companyId) {
-      const nuovo = input.companyId
-        ? await prisma.company.findUnique({
-            where: { id: input.companyId },
-            select: { name: true },
-          })
-        : null;
-      entries.push({
-        action: "company_changed",
-        payload: { from: existing.company?.name ?? null, to: nuovo?.name ?? null },
-      });
-    }
-    if (input.contactId !== undefined && (input.contactId ?? null) !== existing.contactId) {
-      const nuovo = input.contactId
-        ? await prisma.contact.findUnique({ where: { id: input.contactId } })
-        : null;
-      entries.push({
-        action: "contact_changed",
-        payload: {
-          from: contactRef(existing.contact)?.name ?? null,
-          to: contactRef(nuovo)?.name ?? null,
-        },
-      });
-    }
-    if (input.lostReason !== undefined && (input.lostReason ?? null) !== existing.lostReason) {
-      entries.push({
-        action: "lost_reason_changed",
-        payload: { from: existing.lostReason, to: input.lostReason ?? null },
-      });
-    }
-    if (
-      input.visibleToSalesMonitors !== undefined &&
-      input.visibleToSalesMonitors !== existing.visibleToSalesMonitors
-    ) {
-      entries.push({
-        action: "sales_monitor_visibility_changed",
-        payload: { from: existing.visibleToSalesMonitors, to: input.visibleToSalesMonitors },
-      });
-    }
-    if (autoAssign) {
-      entries.push({ action: "assignee_changed", payload: { from: null, to: user.name } });
-    }
-
-    const expectedCloseDate = parseDateOnly(input.expectedCloseDate);
-    await prisma.$transaction(async (tx) => {
-      await tx.task.update({
-        where: { id },
-        data: {
-          ...(autoAssign ? { assigneeId: user.id } : {}),
-          ...(input.title !== undefined ? { title: input.title } : {}),
-          ...(input.description !== undefined ? { description: input.description } : {}),
-          ...(input.stageId !== undefined ? { dealStageId: input.stageId } : {}),
-          ...(input.companyId !== undefined ? { companyId: input.companyId } : {}),
-          ...(input.contactId !== undefined ? { contactId: input.contactId } : {}),
-          ...(input.assigneeId !== undefined ? { assigneeId: input.assigneeId } : {}),
-          ...(input.dealValue !== undefined ? { dealValue: input.dealValue } : {}),
-          ...(probability !== undefined ? { probability } : {}),
-          ...(input.lostReason !== undefined ? { lostReason: input.lostReason } : {}),
-          ...(input.visibleToSalesMonitors !== undefined
-            ? { visibleToSalesMonitors: input.visibleToSalesMonitors }
-            : {}),
-          ...(expectedCloseDate !== undefined ? { expectedCloseDate } : {}),
-          ...(closedAt !== undefined ? { closedAt } : {}),
-        },
-      });
-      for (const entry of entries) {
-        await logActivity(tx, id, user.id, entry.action, entry.payload);
-      }
-      if (stageChange) {
-        await logActivity(tx, id, user.id, "stage_changed", {
-          ...stageChange,
-          ...(input.lostReason ? { reason: input.lostReason } : {}),
-        });
-      }
-    });
-
-    /**
-     * **Vinta: prima si legge, poi si chiede.**
-     *
-     * Fino al 21/08/2026 lo spostamento in fase vinta apriva subito due domande
-     * — il task per l'amministrazione con la sua nota, e il progetto con il suo
-     * responsabile — e solo dopo partiva la lettura dei documenti. Erano domande
-     * fatte al buio: chi le riceveva non aveva ancora davanti niente su cui
-     * decidere, e quando la proposta arrivava si ritrovava un task creato prima
-     * e altri proposti dopo, sugli stessi soldi.
-     *
-     * Ora l'unica cosa che accade qui è mettere l'offerta in lettura. Le domande
-     * le fa il pannello della proposta, quando c'è qualcosa da leggere: lì il
-     * commerciale vede le righe estratte, le corregge, e decide riga per riga
-     * cosa va in amministrazione e cosa nel progetto.
-     */
-    if (newStageWon) {
-      // Un modulo può prendere in mano l'offerta vinta (la lettura dei
-      // contratti, che apre lei le domande); senza, il comportamento di sempre:
-      // il task di fatturazione, senza nota.
-      const gestore = moduliAttivi().find((modulo) => modulo.offertaVinta);
-      if (gestore?.offertaVinta) {
-        const esito = await gestore.offertaVinta(id, user);
-        avvisoAnalisi = esito.analysisNotice;
-        statoAnalisi = esito.analysisState;
-      } else {
-        await ensureWonDealTask(id, user, null);
-      }
-    }
-    if (notifyStageEvent && stageChange) {
-      await notifyMany(
-        [existing.creatorId, existing.assigneeId],
-        user.id,
-        NotificationType.DEAL_STAGE,
-        {
-          message: (t) =>
-            t('Offerta "{{title}}" passata in fase {{stage}}', {
-              title: existing.title,
-              stage: stageChange.to,
-            }),
-          taskId: id,
-          taskKind: TaskKind.DEAL,
-        },
-      );
-    }
-    const updated = await loadDeal(id);
-    return {
-      ...toDealDetail(updated, canEditDeal(user, updated, access), await taskAccessContext(user)),
-      analysisNotice: avvisoAnalisi,
-      analysisState: statoAnalisi,
-    };
+    return aggiornaOffertaPer(requireUser(request), id, request.body);
   });
 
   app.delete("/api/deals/:id", async (request, reply) => {
@@ -895,4 +668,277 @@ export function dealRoutes(app: FastifyInstance): void {
     await softDeleteTask(id);
     return reply.status(204).send();
   });
+}
+
+/**
+ * **La creazione di un'offerta con i permessi di chi la crea** (21/10/2026):
+ * la pagina Offerte e la porta dei plugin. Serve l'accesso completo alle
+ * offerte; la nascita vera (fase, stato, chiusura) è `creaOfferta`.
+ */
+export async function creaOffertaPer(user: User, body: unknown): Promise<DealDetail> {
+  const access = await accessForScope(user, VisibilityScope.DEALS);
+  // Creare richiede accesso completo: la sola lettura (es. Amministrativo) no.
+  if (user.role !== UserRole.ADMIN && access !== VisibilityAccess.FULL) {
+    throw forbidden("Hai accesso alle offerte in sola lettura");
+  }
+  const input = createDealSchema.parse(body);
+  await assertValidDealOwner(input.assigneeId);
+
+  const deal = await creaOfferta(input, user);
+  const full = await loadDeal(deal.id);
+  return toDealDetail(full, canEditDeal(user, full, access), await taskAccessContext(user));
+}
+
+/**
+ * **La modifica di un'offerta**, fuori dalla rotta (21/10/2026): la chiamano la
+ * pagina Offerte (`PATCH /api/deals/:id`) e la porta dei plugin
+ * (`plugins/plugin-crm.ts`), con le stesse regole — chi può, la cronologia
+ * campo per campo, la chiusura e il 100% delle vinte, la lettura degli
+ * allegati, le notifiche. `user` è l'utente efficace (elevazione applicata).
+ */
+export async function aggiornaOffertaPer(user: User, id: string, body: unknown) {
+  await assertCanSeeDeals(user);
+  const access = await accessForScope(user, VisibilityScope.DEALS);
+  const input = updateDealSchema.parse(body);
+  if (input.assigneeId !== undefined) await assertValidDealOwner(input.assigneeId);
+  const existing = await loadDeal(id);
+  /** Riempito solo se la lettura degli allegati non è ripartita perché c'era già. */
+  let avvisoAnalisi: EsitoOffertaVinta["analysisNotice"] = null;
+  /** Com'è andata la messa in lettura, per dirlo a chi ha spostato l'offerta. */
+  let statoAnalisi: EsitoOffertaVinta["analysisState"] = null;
+  // Modifica solo per l'ADMIN o il proprietario (con accesso completo).
+  if (!canEditDeal(user, existing, access)) {
+    throw forbidden("Solo il proprietario dell'offerta può modificarla");
+  }
+
+  // Cambio commerciale e valore: tracciati come lo stato, con i nomi risolti ora.
+  const entries: Array<{ action: string; payload: { from: unknown; to: unknown } }> = [];
+  if (input.assigneeId !== undefined && input.assigneeId !== existing.assigneeId) {
+    const nameOf = async (id: string | null) =>
+      id ? ((await prisma.user.findUnique({ where: { id } }))?.name ?? null) : null;
+    entries.push({
+      action: "assignee_changed",
+      payload: { from: await nameOf(existing.assigneeId), to: await nameOf(input.assigneeId) },
+    });
+  }
+  if (input.dealValue !== undefined && input.dealValue !== existing.dealValue) {
+    entries.push({
+      action: "value_changed",
+      payload: { from: existing.dealValue, to: input.dealValue ?? null },
+    });
+  }
+  if (
+    input.expectedCloseDate !== undefined &&
+    parseDateOnly(input.expectedCloseDate)?.getTime() !== existing.expectedCloseDate?.getTime()
+  ) {
+    entries.push({
+      action: "due_changed",
+      payload: {
+        from: toDateOnly(existing.expectedCloseDate),
+        to: input.expectedCloseDate ?? null,
+      },
+    });
+  }
+
+  let stageChange: { from: string; to: string } | undefined;
+  let newStageWon = false;
+  let notifyStageEvent = false;
+  // Data di chiusura effettiva: quando l'offerta entra in una fase vinta o persa
+  // è **quel giorno** che conta, non la chiusura prevista a suo tempo. Serve ai
+  // conti della previsione, che altrimenti metterebbero un affare concluso a
+  // luglio nel mese in cui si sperava di chiuderlo.
+  let closedAt: Date | null | undefined;
+  // la fase in cui l'offerta sarà dopo questa modifica: serve alla data di chiusura a mano
+  let faseFinale = existing.dealStage;
+  if (input.stageId && input.stageId !== existing.dealStageId) {
+    const newStage = await prisma.dealStage.findUnique({ where: { id: input.stageId } });
+    if (!newStage) throw badRequest("Fase non valida");
+    faseFinale = newStage;
+    stageChange = { from: existing.dealStage!.name, to: newStage.name };
+    newStageWon = newStage.isWon;
+    notifyStageEvent = newStage.isWon || newStage.isLost;
+    // Tornando in una fase aperta l'offerta è di nuovo in gioco: la data va tolta.
+    closedAt = notifyStageEvent ? new Date() : null;
+  }
+
+  /**
+   * **La data di chiusura corretta a mano** (01/10/2026): solo un super admin,
+   * solo su un'offerta vinta o persa. Mezzogiorno UTC, come la convenzione
+   * delle date di chiusura (`scripts/set-deal-closed-date.ts`): il giorno
+   * resta quello in qualunque fuso. Lascia traccia in cronologia.
+   */
+  if (input.closedAt !== undefined) {
+    if (!isElevated(user)) throw forbidden("La data di chiusura la corregge un super admin");
+    if (!faseFinale?.isWon && !faseFinale?.isLost) {
+      throw badRequest("La data di chiusura vale solo per un'offerta vinta o persa");
+    }
+    closedAt = new Date(`${input.closedAt}T12:00:00.000Z`);
+    const prima = toDateOnly(existing.closedAt);
+    if (prima !== input.closedAt) {
+      entries.push({
+        action: "closed_date_changed",
+        payload: { from: prima, to: input.closedAt },
+      });
+    }
+  }
+
+  /**
+   * **La probabilità** (01/10/2026): ogni cambio resta in cronologia, come il
+   * valore e la chiusura prevista — sono i tre numeri della previsione. E
+   * un'offerta che diventa vinta va al **100%**: la previsione la contava già
+   * per intero, ma il campo continuava a dire la stima di prima.
+   */
+  const probability = newStageWon ? 100 : input.probability;
+  if (probability !== undefined && probability !== existing.probability) {
+    entries.push({
+      action: "probability_changed",
+      payload: { from: existing.probability, to: probability },
+    });
+  }
+
+  // Presa in carico: la prima modifica a un'offerta senza assegnatario la
+  // assegna a chi la sta lavorando, come già avviene per i task dello
+  // scadenzario. Non scatta se l'assegnatario viene impostato esplicitamente.
+  const autoAssign = existing.assigneeId === null && input.assigneeId === undefined;
+
+  /**
+   * **Il resto dei campi, in cronologia** (06/10/2026): prima restavano fuori
+   * titolo, descrizione, cliente, contatto, motivo della perdita, la
+   * condivisione con gli investitori e la presa in carico automatica — un'offerta
+   * poteva cambiare cliente o diventare visibile da fuori senza lasciare traccia.
+   * Della descrizione si dice che è cambiata, non il testo: può essere lunga e
+   * l'ha già chi apre l'offerta.
+   */
+  if (input.title !== undefined && input.title !== existing.title) {
+    entries.push({ action: "renamed", payload: { from: existing.title, to: input.title } });
+  }
+  if (input.description !== undefined && (input.description ?? null) !== existing.description) {
+    entries.push({ action: "description_changed", payload: { from: null, to: null } });
+  }
+  if (input.companyId !== undefined && (input.companyId ?? null) !== existing.companyId) {
+    const nuovo = input.companyId
+      ? await prisma.company.findUnique({
+          where: { id: input.companyId },
+          select: { name: true },
+        })
+      : null;
+    entries.push({
+      action: "company_changed",
+      payload: { from: existing.company?.name ?? null, to: nuovo?.name ?? null },
+    });
+  }
+  if (input.contactId !== undefined && (input.contactId ?? null) !== existing.contactId) {
+    const nuovo = input.contactId
+      ? await prisma.contact.findUnique({ where: { id: input.contactId } })
+      : null;
+    entries.push({
+      action: "contact_changed",
+      payload: {
+        from: contactRef(existing.contact)?.name ?? null,
+        to: contactRef(nuovo)?.name ?? null,
+      },
+    });
+  }
+  if (input.lostReason !== undefined && (input.lostReason ?? null) !== existing.lostReason) {
+    entries.push({
+      action: "lost_reason_changed",
+      payload: { from: existing.lostReason, to: input.lostReason ?? null },
+    });
+  }
+  if (
+    input.visibleToSalesMonitors !== undefined &&
+    input.visibleToSalesMonitors !== existing.visibleToSalesMonitors
+  ) {
+    entries.push({
+      action: "sales_monitor_visibility_changed",
+      payload: { from: existing.visibleToSalesMonitors, to: input.visibleToSalesMonitors },
+    });
+  }
+  if (autoAssign) {
+    entries.push({ action: "assignee_changed", payload: { from: null, to: user.name } });
+  }
+
+  const expectedCloseDate = parseDateOnly(input.expectedCloseDate);
+  await prisma.$transaction(async (tx) => {
+    await tx.task.update({
+      where: { id },
+      data: {
+        ...(autoAssign ? { assigneeId: user.id } : {}),
+        ...(input.title !== undefined ? { title: input.title } : {}),
+        ...(input.description !== undefined ? { description: input.description } : {}),
+        ...(input.stageId !== undefined ? { dealStageId: input.stageId } : {}),
+        ...(input.companyId !== undefined ? { companyId: input.companyId } : {}),
+        ...(input.contactId !== undefined ? { contactId: input.contactId } : {}),
+        ...(input.assigneeId !== undefined ? { assigneeId: input.assigneeId } : {}),
+        ...(input.dealValue !== undefined ? { dealValue: input.dealValue } : {}),
+        ...(probability !== undefined ? { probability } : {}),
+        ...(input.lostReason !== undefined ? { lostReason: input.lostReason } : {}),
+        ...(input.visibleToSalesMonitors !== undefined
+          ? { visibleToSalesMonitors: input.visibleToSalesMonitors }
+          : {}),
+        ...(expectedCloseDate !== undefined ? { expectedCloseDate } : {}),
+        ...(closedAt !== undefined ? { closedAt } : {}),
+      },
+    });
+    for (const entry of entries) {
+      await logActivity(tx, id, user.id, entry.action, entry.payload);
+    }
+    if (stageChange) {
+      await logActivity(tx, id, user.id, "stage_changed", {
+        ...stageChange,
+        ...(input.lostReason ? { reason: input.lostReason } : {}),
+      });
+    }
+  });
+
+  /**
+   * **Vinta: prima si legge, poi si chiede.**
+   *
+   * Fino al 21/08/2026 lo spostamento in fase vinta apriva subito due domande
+   * — il task per l'amministrazione con la sua nota, e il progetto con il suo
+   * responsabile — e solo dopo partiva la lettura dei documenti. Erano domande
+   * fatte al buio: chi le riceveva non aveva ancora davanti niente su cui
+   * decidere, e quando la proposta arrivava si ritrovava un task creato prima
+   * e altri proposti dopo, sugli stessi soldi.
+   *
+   * Ora l'unica cosa che accade qui è mettere l'offerta in lettura. Le domande
+   * le fa il pannello della proposta, quando c'è qualcosa da leggere: lì il
+   * commerciale vede le righe estratte, le corregge, e decide riga per riga
+   * cosa va in amministrazione e cosa nel progetto.
+   */
+  if (newStageWon) {
+    // Un modulo può prendere in mano l'offerta vinta (la lettura dei
+    // contratti, che apre lei le domande); senza, il comportamento di sempre:
+    // il task di fatturazione, senza nota.
+    const gestore = moduliAttivi().find((modulo) => modulo.offertaVinta);
+    if (gestore?.offertaVinta) {
+      const esito = await gestore.offertaVinta(id, user);
+      avvisoAnalisi = esito.analysisNotice;
+      statoAnalisi = esito.analysisState;
+    } else {
+      await ensureWonDealTask(id, user, null);
+    }
+  }
+  if (notifyStageEvent && stageChange) {
+    await notifyMany(
+      [existing.creatorId, existing.assigneeId],
+      user.id,
+      NotificationType.DEAL_STAGE,
+      {
+        message: (t) =>
+          t('Offerta "{{title}}" passata in fase {{stage}}', {
+            title: existing.title,
+            stage: stageChange.to,
+          }),
+        taskId: id,
+        taskKind: TaskKind.DEAL,
+      },
+    );
+  }
+  const updated = await loadDeal(id);
+  return {
+    ...toDealDetail(updated, canEditDeal(user, updated, access), await taskAccessContext(user)),
+    analysisNotice: avvisoAnalisi,
+    analysisState: statoAnalisi,
+  };
 }

@@ -35,7 +35,7 @@ import {
   useRenameGroup,
   useUpdateGroupMembers,
 } from "./useGroups";
-import { edizione } from "@/edition/rotte";
+import { scopeAcceso } from "@/lib/funzioni";
 
 /**
  * Moduli con visibilità configurabile per gruppo, tutti con tre livelli:
@@ -67,17 +67,14 @@ const VISIBILITY_MODULES = [
     description:
       "In sola lettura si osservano tutti i progetti; con accesso completo se ne lavorano i task. I permessi per singolo progetto (membri) restano validi e possono dare di più.",
   },
-  // The Tickets scope exists with the ticket module (08/10/2026).
-  ...(edizione.moduli.has("ticket")
-    ? [
-        {
-          scope: VisibilityScope.TICKETS,
-          title: "Ticket",
-          description:
-            "Ticket di supporto (lato interno). In sola lettura si consultano senza poterli lavorare.",
-        },
-      ]
-    : []),
+  // The Tickets scope exists with the ticket module (08/10/2026); whether it is
+  // offered is decided with the others, by `scopeAcceso` (17/10/2026).
+  {
+    scope: VisibilityScope.TICKETS,
+    title: "Ticket",
+    description:
+      "Ticket di supporto (lato interno). In sola lettura si consultano senza poterli lavorare.",
+  },
 ] as const;
 
 export function GroupsPage() {
@@ -249,9 +246,12 @@ export function GroupsPage() {
 
       {isAdmin && (
         <div className="grid gap-4 md:grid-cols-2">
-          {VISIBILITY_MODULES.map((module) => (
-            <VisibilityCard key={module.scope} {...module} />
-          ))}
+          {/* Gli scope delle aree spente nell'installazione non si offrono (17/10/2026). */}
+          {VISIBILITY_MODULES.filter((module) => scopeAcceso(currentUser, module.scope)).map(
+            (module) => (
+              <VisibilityCard key={module.scope} {...module} />
+            ),
+          )}
           <AccessInspector />
         </div>
       )}
@@ -558,6 +558,7 @@ const ACCESS_LABELS: Record<string, string> = {
  */
 function AccessInspector() {
   const { t } = useTranslation();
+  const currentUser = useCurrentUser();
   const { data: users } = useUsers();
   const [userId, setUserId] = useState("");
   const { data: access } = useQuery({
@@ -600,17 +601,19 @@ function AccessInspector() {
           )}
           {!access.isAdmin &&
             !access.isPortal &&
-            Object.values(VisibilityScope).map((scope) => {
-              const level = access.scopes[scope];
-              return (
-                <div key={scope} className="flex items-center justify-between gap-2">
-                  <span>{t(VISIBILITY_SCOPE_LABELS[scope])}</span>
-                  <Badge variant={level ? "default" : "outline"}>
-                    {level ? t(ACCESS_LABELS[level] ?? "") : t("Niente")}
-                  </Badge>
-                </div>
-              );
-            })}
+            Object.values(VisibilityScope)
+              .filter((scope) => scopeAcceso(currentUser, scope))
+              .map((scope) => {
+                const level = access.scopes[scope];
+                return (
+                  <div key={scope} className="flex items-center justify-between gap-2">
+                    <span>{t(VISIBILITY_SCOPE_LABELS[scope])}</span>
+                    <Badge variant={level ? "default" : "outline"}>
+                      {level ? t(ACCESS_LABELS[level] ?? "") : t("Niente")}
+                    </Badge>
+                  </div>
+                );
+              })}
           {access.managerOf.length > 0 && (
             <p className="mt-1 text-xs text-muted-foreground">
               {t(

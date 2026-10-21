@@ -76,5 +76,9 @@
   "Questo plugin non è installato: si installa con il suo installa.sh e un riavvio.": "Questo plugin non è installato: si installa con il suo installa.sh e un riavvio.",
   "È l'utente di servizio del modulo «{{name}}»: sceglierne un altro nel modulo prima di eliminarlo": "È l'utente di servizio del modulo «{{name}}»: sceglierne un altro nel modulo prima di eliminarlo",
   "I riepiloghi delle ore sono riservati ai manager": "I riepiloghi delle ore sono riservati ai manager",
-  "Questo ruolo non è previsto in questa edizione": "Questo ruolo non è previsto in questa edizione"
+  "Questo ruolo non è previsto in questa edizione": "Questo ruolo non è previsto in questa edizione",
+  "I progetti non sono attivi in questa installazione": "I progetti non sono attivi in questa installazione",
+  "Funzione sconosciuta: {{chiave}}": "Funzione sconosciuta: {{chiave}}",
+  "Azienda non valida": "Azienda non valida",
+  "Un'offerta si modifica con i campi dell'offerta, non come task": "Un'offerta si modifica con i campi dell'offerta, non come task"
 }

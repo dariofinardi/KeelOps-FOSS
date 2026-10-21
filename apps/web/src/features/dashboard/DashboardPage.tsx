@@ -19,7 +19,6 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   AlertTriangle,
@@ -33,7 +32,7 @@ import {
   LifeBuoy,
   ListTodo,
 } from "lucide-react";
-import type { Dashboard } from "@kancrm/shared";
+import { TaskKind, type Dashboard } from "@kancrm/shared";
 import { api } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -72,6 +71,7 @@ import {
   type ColonnaGiornata,
   type LayoutGiornata,
 } from "./layout";
+import { useVaiDallaPagina } from "@/lib/ritorno";
 
 /**
  * Le due letture della giornata: **il lavoro** (le scadenze, la coda, le
@@ -138,7 +138,7 @@ export function DashboardPage() {
   const { t } = useTranslation();
   const currentUser = useCurrentUser();
   const money = useMoney();
-  const navigate = useNavigate();
+  const vai = useVaiDallaPagina();
   /**
    * La scelta si ricorda, come ogni filtro dell'applicazione (CLAUDE.md): chi
    * guarda le offerte dei colleghi di solito lo rifà anche domani.
@@ -352,7 +352,7 @@ export function DashboardPage() {
                   className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm transition-colors hover:bg-muted/60"
                   style={{ borderColor: status.color }}
                   title={`Apri i tuoi task in "${status.name}"`}
-                  onClick={() => navigate(target)}
+                  onClick={() => vai(target)}
                 >
                   <span className="size-2 rounded-full" style={{ backgroundColor: status.color }} />
                   {status.name}
@@ -510,7 +510,9 @@ export function DashboardPage() {
               <li key={ticket.id}>
                 <button
                   className="flex w-full items-center gap-2 rounded-md border px-3 py-2 text-left text-sm hover:bg-muted/40"
-                  onClick={() => navigate("/ticket")}
+                  // La richiesta si apre qui, nel suo pannello: chiudendolo si
+                  // ritrova la giornata com'era (21/10/2026).
+                  onClick={() => record.open(ticket.id, TaskKind.TICKET)}
                 >
                   <span className="min-w-0 flex-1 truncate font-medium">{ticket.title}</span>
                   <span className="hidden text-xs text-muted-foreground sm:block">

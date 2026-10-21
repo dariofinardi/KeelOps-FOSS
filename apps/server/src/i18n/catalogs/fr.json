@@ -352,5 +352,9 @@
   "Apri": "Ouvrir",
   "È l'utente di servizio del modulo «{{name}}»: sceglierne un altro nel modulo prima di eliminarlo": "C'est l'utilisateur de service du formulaire « {{name}} » : choisissez-en un autre dans le formulaire avant de le supprimer",
   "I riepiloghi delle ore sono riservati ai manager": "Les récapitulatifs des heures sont réservés aux managers",
-  "Questo ruolo non è previsto in questa edizione": "Ce rôle n'est pas prévu dans cette édition"
+  "Questo ruolo non è previsto in questa edizione": "Ce rôle n'est pas prévu dans cette édition",
+  "I progetti non sono attivi in questa installazione": "Les projets ne sont pas activés dans cette installation",
+  "Funzione sconosciuta: {{chiave}}": "Fonction inconnue : {{chiave}}",
+  "Azienda non valida": "Entreprise non valide",
+  "Un'offerta si modifica con i campi dell'offerta, non come task": "Une offre se modifie avec ses propres champs, pas comme une tâche"
 }

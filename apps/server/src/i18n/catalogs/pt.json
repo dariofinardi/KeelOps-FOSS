@@ -352,5 +352,9 @@
   "Indica il valore: un'offerta vinta senza importo conterebbe zero": "Indique o valor: uma proposta ganha sem montante contaria como zero",
   "È l'utente di servizio del modulo «{{name}}»: sceglierne un altro nel modulo prima di eliminarlo": "É o utilizador de serviço do módulo «{{name}}»: escolha outro no módulo antes de o eliminar",
   "I riepiloghi delle ore sono riservati ai manager": "Os resumos de horas estão reservados aos gestores",
-  "Questo ruolo non è previsto in questa edizione": "Esta função não está prevista nesta edição"
+  "Questo ruolo non è previsto in questa edizione": "Esta função não está prevista nesta edição",
+  "I progetti non sono attivi in questa installazione": "Os projetos não estão ativos nesta instalação",
+  "Funzione sconosciuta: {{chiave}}": "Função desconhecida: {{chiave}}",
+  "Azienda non valida": "Empresa inválida",
+  "Un'offerta si modifica con i campi dell'offerta, non come task": "Uma proposta altera-se com os seus próprios campos, não como tarefa"
 }

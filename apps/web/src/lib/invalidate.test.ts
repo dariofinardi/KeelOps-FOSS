@@ -40,4 +40,13 @@ describe("invalidateTaskWorld", () => {
       expect(keys, `manca ${key}`).toContainEqual([key, "x1"]);
     }
   });
+
+  it("con un id rinfresca anche gli altri pannelli aperti che lo mostrano", () => {
+    // Il task collegato modificato sopra la sua offerta: tornando all'offerta,
+    // l'elenco dei task collegati deve avere il titolo e la data nuovi.
+    const keys = keysInvalidated("x1");
+    for (const key of ["task", "deal", "ticket"]) {
+      expect(keys, `manca ${key}`).toContainEqual([key]);
+    }
+  });
 });

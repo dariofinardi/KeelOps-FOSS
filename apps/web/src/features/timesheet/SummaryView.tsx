@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { useCurrentUser } from "@/features/auth/useAuth";
 import { useTimesheetBreakdown, useTimesheetSummary, useTimesheetUsers } from "./useTimesheet";
 import { UserMultiSelect } from "./UserMultiSelect";
-import { ProduttivitaOre } from "@/edition/slot-pagine";
+import { ProduttivitaOre as ProduttivitaDellEdizione } from "@/edition/slot-pagine";
+import { useModuloAcceso } from "@/lib/funzioni";
 
 /**
  * **I riepiloghi del periodo** — un mese o, dall'08/10/2026, una settimana:
@@ -43,6 +44,8 @@ export function SummaryView({
   onSelectedUserIdsChange: (ids: string[]) => void;
 }) {
   const { t } = useTranslation();
+  // Il modulo timesheet spento nell'installazione vale come assente (17/10/2026).
+  const ProduttivitaOre = useModuloAcceso("timesheet") ? ProduttivitaDellEdizione : undefined;
   // A remembered "produttivita" on an edition without it falls back to the summary.
   const modo = mode === "produttivita" && !ProduttivitaOre ? "summary" : mode;
   return (

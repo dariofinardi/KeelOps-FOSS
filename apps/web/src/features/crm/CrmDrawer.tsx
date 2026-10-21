@@ -4,7 +4,7 @@
 import { useState, type ReactNode } from "react";
 import { useDocumentTitle } from "@/lib/use-document-title";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { ArrowUpRight, Building2, X } from "lucide-react";
 import { AREAS } from "@/components/layout/areas";
 import { canReachDeals, type CrmNote, type LinkedDeal } from "@kancrm/shared";
@@ -18,16 +18,21 @@ import { formatDateTime } from "@/features/tasks/task-utils";
 import { PanelError } from "@/components/ui/panel-error";
 import { useAddCrmNote, useCompanyDetail, useContactDetail } from "./useCrm";
 import { useSaveOrDiscard } from "@/lib/unsaved-changes";
+import { quiConPannello, useVaiA } from "@/lib/ritorno";
+import { TornaIndietro } from "@/components/ui/torna-indietro";
 
 function CrmDrawer({
   open,
   onClose,
   title,
+  indietro,
   children,
 }: {
   open: boolean;
   onClose: () => void;
   title: ReactNode;
+  /** Da dove si è arrivati (lib/ritorno.ts): «← Task …» sopra il titolo. */
+  indietro?: { etichetta: string; onClick: () => void } | null;
   children: ReactNode;
 }) {
   const { t } = useTranslation();
@@ -38,7 +43,16 @@ function CrmDrawer({
       label={typeof title === "string" ? title : t("Dettaglio")}
     >
       <header className="flex items-center justify-between border-b p-4">
-        <h2 className="text-lg font-semibold">{title}</h2>
+        <div className="min-w-0">
+          {indietro && (
+            <TornaIndietro
+              etichetta={indietro.etichetta}
+              onClick={indietro.onClick}
+              className="mb-0.5"
+            />
+          )}
+          <h2 className="text-lg font-semibold">{title}</h2>
+        </div>
         <Button variant="ghost" size="icon" onClick={onClose} aria-label={t("Chiudi")}>
           <X className="size-4" />
         </Button>
@@ -52,8 +66,11 @@ function LinkedDealsList({
   deals,
   companyId,
   dealCount,
+  origine,
 }: {
   deals: LinkedDeal[];
+  /** Come si chiama la scheda da cui si parte: «← Acme» all'arrivo. */
+  origine: string;
   /** Presente sulla scheda azienda: aggiunge il rimando all'elenco filtrato. */
   companyId?: string;
   /**
@@ -64,7 +81,10 @@ function LinkedDealsList({
 }) {
   const { t } = useTranslation();
   const money = useMoney();
-  const navigate = useNavigate();
+  const vaiA = useVaiA();
+  const location = useLocation();
+  // Tornando, la scheda dell'azienda si riapre da sola (`?azienda=`).
+  const qui = companyId ? quiConPannello(location, "azienda", companyId) : null;
   return (
     <section className="mt-4">
       <h3 className="mb-2 flex items-center justify-between gap-2 text-sm font-semibold">
@@ -77,7 +97,9 @@ function LinkedDealsList({
             type="button"
             className="inline-flex items-center gap-1 text-xs font-normal text-muted-foreground hover:text-foreground hover:underline"
             title={t("Apri le offerte di questo cliente")}
-            onClick={() => navigate(`${AREAS.deals.to}?cliente=${companyId}`)}
+            onClick={() =>
+              vaiA(`${AREAS.deals.to}?cliente=${companyId}`, { etichetta: origine }, qui)
+            }
           >
             {t("Vedi nell'elenco")} <ArrowUpRight className="size-3" />
           </button>
@@ -90,7 +112,9 @@ function LinkedDealsList({
               type="button"
               className="flex w-full items-center justify-between rounded-md border px-3 py-2 text-left text-sm hover:bg-muted/40"
               title={t("Apri l'offerta")}
-              onClick={() => navigate(`/offerte?deal=${deal.id}`)}
+              onClick={() =>
+                vaiA(`/offerte?deal=${deal.id}`, { etichetta: origine, record: deal.id }, qui)
+              }
             >
               <span className="truncate">{deal.title}</span>
               <span className="flex shrink-0 items-center gap-2">
@@ -238,7 +262,10 @@ export function ContactDetailDrawer({
             )}
             {contact.phone && <p>{contact.phone}</p>}
           </div>
-          <LinkedDealsList deals={contact.deals} />
+          <LinkedDealsList
+            deals={contact.deals}
+            origine={`${contact.firstName} ${contact.lastName}`.trim()}
+          />
           <CrmNotesSection
             notes={contact.crmNotes}
             pending={addNote.isPending}
@@ -254,14 +281,18 @@ export function ContactDetailDrawer({
 export function CompanyDetailDrawer({
   companyId,
   onClose,
+  indietro,
 }: {
   companyId: string | null;
   onClose: () => void;
+  /** Da dove si è arrivati, se da un task o da un progetto (lib/ritorno.ts). */
+  indietro?: { etichetta: string; onClick: () => void } | null;
 }) {
   const { t } = useTranslation();
   const { data: company, error } = useCompanyDetail(companyId);
   useDocumentTitle(company?.name ?? null);
-  const navigate = useNavigate();
+  const vaiA = useVaiA();
+  const location = useLocation();
   const currentUser = useCurrentUser();
   const addNote = useAddCrmNote();
   const saveOrDiscard = useSaveOrDiscard();
@@ -288,6 +319,7 @@ export function CompanyDetailDrawer({
       open={companyId !== null}
       onClose={requestClose}
       title={company?.name ?? t("Caricamento…")}
+      indietro={indietro}
     >
       {error && !company && (
         <PanelError
@@ -336,6 +368,7 @@ export function CompanyDetailDrawer({
               deals={company.deals}
               companyId={company.id}
               dealCount={company.dealCount}
+              origine={company.name}
             />
           )}
           {/* I progetti non si elencano qui (li governa la loro pagina, con
@@ -352,7 +385,13 @@ export function CompanyDetailDrawer({
                   type="button"
                   className="inline-flex items-center gap-1 text-xs font-normal text-muted-foreground hover:text-foreground hover:underline"
                   title={t("Apri i progetti di questo cliente")}
-                  onClick={() => navigate(`${AREAS.projects.to}?cliente=${company.id}`)}
+                  onClick={() =>
+                    vaiA(
+                      `${AREAS.projects.to}?cliente=${company.id}`,
+                      { etichetta: company.name },
+                      quiConPannello(location, "azienda", company.id),
+                    )
+                  }
                 >
                   {t("Vedi nell'elenco")} <ArrowUpRight className="size-3" />
                 </button>

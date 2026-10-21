@@ -16,7 +16,10 @@ import { GlobalSearch } from "./GlobalSearch";
  */
 
 vi.mock("@tanstack/react-query", () => ({ useQuery: () => ({ data: [] }) }));
-vi.mock("react-router-dom", () => ({ useNavigate: () => () => undefined }));
+vi.mock("react-router-dom", () => ({
+  useNavigate: () => () => undefined,
+  useLocation: () => ({ pathname: "/", search: "", state: null }),
+}));
 vi.mock("@/features/tasks/useRecordOpener", () => ({
   useRecordOpener: () => ({ node: null, open: () => undefined }),
 }));

@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
 import { useState, type ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
 import { UserRole } from "@kancrm/shared";
 import { useCurrentUser } from "@/features/auth/useAuth";
 import { DealDetailDrawer } from "@/features/deals/DealDetailDrawer";
 import { TaskDetailDrawer } from "@/features/tasks/TaskDetailDrawer";
 import { slot } from "@/edition/slots";
 import { notificationDestination, recordTargetOf } from "./record-target";
+import { useVaiDallaPagina } from "@/lib/ritorno";
 
 /**
  * Apre il record giusto a partire da un riferimento (id + tipo): il pannello
@@ -36,7 +36,7 @@ export function useRecordOpener(): {
   // Un cliente del portale apre sempre e solo il pannello della propria
   // richiesta: vedi `recordTargetOf`.
   const isPortal = user.role === UserRole.PORTAL;
-  const navigate = useNavigate();
+  const vai = useVaiDallaPagina();
   const [taskId, setTaskId] = useState<string | null>(null);
   const [dealId, setDealId] = useState<string | null>(null);
   const [ticketId, setTicketId] = useState<string | null>(null);
@@ -52,7 +52,7 @@ export function useRecordOpener(): {
     openNotification: (notification) => {
       const destination = notificationDestination(notification, isPortal);
       if (!destination) return;
-      if (destination.kind === "route") navigate(destination.path);
+      if (destination.kind === "route") vai(destination.path);
       else if (destination.target === "deal") setDealId(destination.taskId);
       else if (destination.target === "ticket") setTicketId(destination.taskId);
       else setTaskId(destination.taskId);

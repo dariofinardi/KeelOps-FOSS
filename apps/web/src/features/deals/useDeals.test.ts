@@ -32,6 +32,7 @@ describe("i filtri delle offerte arrivano tutti al server", () => {
     sortDir: "desc",
     stalled: "senzaPasso",
     months: "2026-09,senza-data",
+    investors: "shared",
   };
 
   it("nessun campo dello schema resta per strada", () => {

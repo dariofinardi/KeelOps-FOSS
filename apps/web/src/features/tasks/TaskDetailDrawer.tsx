@@ -49,17 +49,30 @@ import { AttachmentsSection } from "./AttachmentsSection";
 // Re-export: DealDetailDrawer e TicketDrawer la importano storicamente da qui.
 export { AttachmentsSection } from "./AttachmentsSection";
 import { changedFieldLabels, restorePayload, snapshotOf, type TaskSnapshot } from "./task-snapshot";
+import { useModuloAcceso } from "@/lib/funzioni";
+import { TornaIndietro } from "@/components/ui/torna-indietro";
 
 interface TaskDetailDrawerProps {
   /** "over": sopra un altro pannello (un link da un'offerta), che resta sotto e ricompare. */
   layer?: "panel" | "over";
   taskId: string | null;
   onClose: () => void;
+  /**
+   * Da dove si è arrivati, se non dall'elenco: «← Offerta Rinnovo 2027»
+   * accanto al titolo (21/10/2026, `lib/ritorno.ts`).
+   */
+  indietro?: { etichetta: string; onClick: () => void } | null;
   /** Apre un altro task (navigazione lungo la sequenza). */
   onOpenTask?: (id: string) => void;
 }
 
-export function TaskDetailDrawer({ taskId, onClose, onOpenTask, layer }: TaskDetailDrawerProps) {
+export function TaskDetailDrawer({
+  taskId,
+  onClose,
+  onOpenTask,
+  layer,
+  indietro,
+}: TaskDetailDrawerProps) {
   const { t } = useTranslation();
   const { data: task, error } = useTaskDetail(taskId);
 
@@ -85,6 +98,7 @@ export function TaskDetailDrawer({ taskId, onClose, onOpenTask, layer }: TaskDet
           task={task}
           onClose={onClose}
           onOpenTask={onOpenTask}
+          indietro={indietro ?? null}
           registerRequestClose={(fn) => (requestCloseRef.current = fn)}
         />
       ) : error ? (
@@ -107,11 +121,13 @@ function DrawerContent({
   task,
   onClose,
   onOpenTask,
+  indietro,
   registerRequestClose,
 }: {
   task: TaskDetail;
   onClose: () => void;
   onOpenTask?: (id: string) => void;
+  indietro: { etichetta: string; onClick: () => void } | null;
   /** Espone al contenitore la chiusura che offre il ripristino delle modifiche. */
   registerRequestClose?: (fn: () => void) => void;
 }) {
@@ -264,7 +280,9 @@ function DrawerContent({
    * per cui si compilano il venerdì a memoria. L'area di un task è quella del
    * suo stato, come ovunque.
    */
-  const canLogHours = Boolean(task.projectId) && task.status?.category === ActivityCategory.DEV;
+  const timesheetCompleto = useModuloAcceso("timesheet");
+  const canLogHours =
+    timesheetCompleto && Boolean(task.projectId) && task.status?.category === ActivityCategory.DEV;
 
   return (
     <>
@@ -279,6 +297,14 @@ function DrawerContent({
            * sta dove l'occhio lo cerca — sopra il titolo — e resta visibile
            * perché l'intestazione non scorre.
            */}
+          {/* Da dove si è arrivati (un'offerta, un'altra pagina): per primo. */}
+          {indietro && (
+            <TornaIndietro
+              etichetta={indietro.etichetta}
+              onClick={indietro.onClick}
+              className="mb-0.5"
+            />
+          )}
           {task.parent && (
             <button
               type="button"

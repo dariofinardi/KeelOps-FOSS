@@ -19,8 +19,12 @@ import { PluginMenu } from "@/features/plugins/PluginMenu";
 import { useTimesheetPeriod, useTimesheetUsers } from "./useTimesheet";
 import { UserMultiSelect } from "./UserMultiSelect";
 import { SummaryView } from "./SummaryView";
-import { EsportazioniOre, VistaReportOre, useOreSuggerite } from "@/edition/slot-pagine";
-import { edizione } from "@/edition/rotte";
+import {
+  EsportazioniOre as EsportazioniDellEdizione,
+  VistaReportOre as VistaReportDellEdizione,
+  useOreSuggerite as oreSuggeriteDellEdizione,
+} from "@/edition/slot-pagine";
+import { useModuloAcceso } from "@/lib/funzioni";
 import { TimesheetDayView, TimesheetGrid } from "./TimesheetGrid";
 import { monthYearLabel, periodLabel, type ViewMode } from "./period";
 
@@ -102,7 +106,12 @@ export function TimesheetPage() {
    * their own hours); only managers in the community edition, where the
    * server refuses the others (decided 08/10/2026).
    */
-  const timesheetCompleto = edizione.moduli.has("timesheet");
+  // Il timesheet completo c'è se l'edizione lo porta **e** l'installazione non
+  // l'ha spento (17/10/2026): spento, i suoi pezzi spariscono come nella community.
+  const timesheetCompleto = useModuloAcceso("timesheet");
+  const EsportazioniOre = timesheetCompleto ? EsportazioniDellEdizione : undefined;
+  const VistaReportOre = timesheetCompleto ? VistaReportDellEdizione : undefined;
+  const useOreSuggerite = timesheetCompleto ? oreSuggeriteDellEdizione : undefined;
   const vedeRiepiloghi = timesheetCompleto || currentUser.canViewTeamTimesheet;
   const vistaEffettiva: ViewMode =
     (view === "summary" && !vedeRiepiloghi) || (view === "report" && !VistaReportOre)

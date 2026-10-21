@@ -352,5 +352,9 @@
   "Apri": "Öffnen",
   "È l'utente di servizio del modulo «{{name}}»: sceglierne un altro nel modulo prima di eliminarlo": "Dies ist der Dienstbenutzer des Moduls «{{name}}»: Wählen Sie im Modul einen anderen aus, bevor Sie ihn löschen",
   "I riepiloghi delle ore sono riservati ai manager": "Stundenübersichten sind Managern vorbehalten",
-  "Questo ruolo non è previsto in questa edizione": "Diese Rolle ist in dieser Edition nicht vorgesehen"
+  "Questo ruolo non è previsto in questa edizione": "Diese Rolle ist in dieser Edition nicht vorgesehen",
+  "I progetti non sono attivi in questa installazione": "Projekte sind in dieser Installation nicht aktiviert",
+  "Funzione sconosciuta: {{chiave}}": "Unbekannte Funktion: {{chiave}}",
+  "Azienda non valida": "Ungültige Firma",
+  "Un'offerta si modifica con i campi dell'offerta, non come task": "Ein Angebot wird über seine eigenen Felder geändert, nicht als Aufgabe"
 }

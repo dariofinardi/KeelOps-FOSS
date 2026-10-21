@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
 import { noteRecordChanged } from "../realtime/record-changes";
+import { canaleCorrente } from "../../lib/canale";
 
 // Tipo strutturale: accetta sia la transazione del client esteso (soft delete)
 // sia quella del client raw.
@@ -29,7 +30,22 @@ export async function logActivity(
       taskId,
       userId,
       action,
-      payload: payload === undefined ? null : JSON.stringify(payload),
+      payload: conIlCanale(payload),
     },
   });
+}
+
+/**
+ * Il payload da salvare, con il canale se la modifica arriva da un plugin
+ * (`lib/canale.ts`): `via` accanto agli altri campi, e la persona resta quella
+ * di `userId`. Lo legge `toActivityDto`, che lo porta fuori come campo suo.
+ */
+export function conIlCanale(payload: unknown): string | null {
+  const via = canaleCorrente();
+  if (!via) return payload === undefined ? null : JSON.stringify(payload);
+  if (payload === undefined || payload === null) return JSON.stringify({ via });
+  if (typeof payload === "object" && !Array.isArray(payload)) {
+    return JSON.stringify({ ...(payload as Record<string, unknown>), via });
+  }
+  return JSON.stringify({ valore: payload, via });
 }

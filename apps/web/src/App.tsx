@@ -29,7 +29,12 @@ import { applyLanguage, linguaSceltaAMano } from "./lib/i18n";
 import { ThemeManager } from "./features/theme/ThemeManager";
 import { AttachmentReaderPage } from "./features/attachments/useAttachmentReader";
 import { lazyPage } from "./lib/lazy-page";
-import { AdminOnly, ManagerOnly, ManagerOrAdmin } from "./components/layout/route-guards";
+import {
+  AdminOnly,
+  FunzioneAccesa,
+  ManagerOnly,
+  ManagerOrAdmin,
+} from "./components/layout/route-guards";
 import { edizione } from "./edition/rotte";
 
 /** Rimando permanente da un indirizzo storico, query compresa. */
@@ -187,13 +192,29 @@ function AppInterface() {
             <Route
               path="/offerte"
               element={
-                <DealsAccessOnly>
-                  <DealsPage />
-                </DealsAccessOnly>
+                <FunzioneAccesa chiave="offerte">
+                  <DealsAccessOnly>
+                    <DealsPage />
+                  </DealsAccessOnly>
+                </FunzioneAccesa>
               }
             />
-            <Route path="/progetti" element={<ProjectsPage />} />
-            <Route path="/progetti/:id" element={<ProjectDetailPage />} />
+            <Route
+              path="/progetti"
+              element={
+                <FunzioneAccesa chiave="progetti">
+                  <ProjectsPage />
+                </FunzioneAccesa>
+              }
+            />
+            <Route
+              path="/progetti/:id"
+              element={
+                <FunzioneAccesa chiave="progetti">
+                  <ProjectDetailPage />
+                </FunzioneAccesa>
+              }
+            />
             <Route path="/guida" element={<HelpPage />} />
             <Route path="/profilo" element={<ProfilePage />} />
             {/* The AI queue: whoever leads something, whatever the scope. Core since 08/10/2026. */}
@@ -206,7 +227,14 @@ function AppInterface() {
               }
             />
             {/* The timesheet grid is core; its extras come with the edition (08/10/2026). */}
-            <Route path="/timesheet" element={<TimesheetPage />} />
+            <Route
+              path="/timesheet"
+              element={
+                <FunzioneAccesa chiave="ore">
+                  <TimesheetPage />
+                </FunzioneAccesa>
+              }
+            />
             {/* Aziende visibili a tutti gli interni; la tab Persone è gestita dalla pagina. */}
             <Route path="/contatti" element={<ContactsPage />} />
             <Route
@@ -237,7 +265,9 @@ function AppInterface() {
               path="/fasi"
               element={
                 <AdminOnly>
-                  <DealStagesPage />
+                  <FunzioneAccesa chiave="offerte">
+                    <DealStagesPage />
+                  </FunzioneAccesa>
                 </AdminOnly>
               }
             />

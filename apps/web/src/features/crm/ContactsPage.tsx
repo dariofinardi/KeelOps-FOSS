@@ -3,7 +3,6 @@
 
 import { useCallback, Fragment, useEffect, useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
 import { ArrowUpRight, Building2, Pencil, Plus, Trash2, Upload, UserRound } from "lucide-react";
 import { AREAS } from "@/components/layout/areas";
 import { useUrlFilterHandoff } from "@/lib/useUrlFilterHandoff";
@@ -38,6 +37,7 @@ import {
   useUpsertCompany,
   useUpsertContact,
 } from "./useCrm";
+import { useRitorno, useVaiA } from "@/lib/ritorno";
 
 type Tab = "contacts" | "companies";
 
@@ -413,7 +413,7 @@ function ContactDialog({
  */
 export function CompanyCounts({ company }: { company: CompanyListItem }) {
   const { t } = useTranslation();
-  const navigate = useNavigate();
+  const vaiA = useVaiA();
   const currentUser = useCurrentUser();
 
   const counters = [
@@ -457,7 +457,8 @@ export function CompanyCounts({ company }: { company: CompanyListItem }) {
               type="button"
               className="inline-flex items-center gap-1 rounded px-1 hover:bg-muted hover:text-foreground"
               title={t("Apri {{key}} di {{name}}", { key, name: company.name })}
-              onClick={() => navigate(to)}
+              // All'arrivo «← Acme», per tornare al cliente da cui si è partiti.
+              onClick={() => vaiA(to, { etichetta: company.name })}
             >
               {icon} {label}
               <ArrowUpRight className="size-3" />
@@ -493,6 +494,11 @@ function CompaniesTab({
   const [editing, setEditing] = useState<CompanyListItem | null>(null);
   const [creating, setCreating] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
+  // Arrivati alla scheda da un task o da un progetto: «← da dove» (21/10/2026).
+  const ritornoScheda = useRitorno(detailId);
+  const ritornoAlPannello = ritornoScheda
+    ? { etichetta: ritornoScheda.etichetta, onClick: ritornoScheda.torna }
+    : null;
   // Arrivo da un altro pannello (?azienda=<id>): apre la scheda **una volta**, e
   // avvisa il genitore di consumare il parametro. Senza, chiuso il pannello e
   // rimontata la tab (cambio scheda) il seed lo riaprirebbe da solo per sempre.
@@ -616,7 +622,11 @@ function CompaniesTab({
           }}
         />
       )}
-      <CompanyDetailDrawer companyId={detailId} onClose={() => setDetailId(null)} />
+      <CompanyDetailDrawer
+        companyId={detailId}
+        onClose={() => setDetailId(null)}
+        indietro={ritornoAlPannello}
+      />
       {menu}
     </div>
   );

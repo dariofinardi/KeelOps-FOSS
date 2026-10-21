@@ -278,20 +278,8 @@ export function crmRoutes(app: FastifyInstance): void {
   });
 
   app.patch("/api/companies/:id", async (request) => {
-    await assertCanManageCompanies(requireUser(request));
     const { id } = request.params as { id: string };
-    const input = upsertCompanySchema.partial().parse(request.body);
-    const existing = await prisma.company.findUnique({ where: { id } });
-    if (!existing) throw notFound("Azienda non trovata");
-    // Rinominare in un nome che è già di un'altra azienda crea il doppione.
-    if (input.name !== undefined) await assertNomeAziendaLibero(input.name, id);
-    try {
-      await prisma.company.update({ where: { id }, data: input });
-      return { id };
-    } catch (error) {
-      if (isUniqueViolation(error)) throw conflict("Esiste già un'azienda con questo nome");
-      throw error;
-    }
+    return aggiornaAziendaPer(requireUser(request), id, request.body);
   });
 
   app.delete("/api/companies/:id", async (request, reply) => {
@@ -398,31 +386,12 @@ export function crmRoutes(app: FastifyInstance): void {
   });
 
   app.post("/api/contacts", async (request, reply) => {
-    const user = requireUser(request);
-    await assertCanSeeContacts(user);
-    const input = upsertContactSchema.parse(request.body);
-    const contact = await prisma.contact.create({
-      data: {
-        firstName: input.firstName,
-        lastName: input.lastName,
-        email: input.email ?? null,
-        phone: input.phone ?? null,
-        roleTitle: input.roleTitle ?? null,
-        companyId: input.companyId ?? null,
-      },
-    });
-    return reply.status(201).send({ id: contact.id });
+    return reply.status(201).send(await creaContattoPer(requireUser(request), request.body));
   });
 
   app.patch("/api/contacts/:id", async (request) => {
-    const user = requireUser(request);
-    await assertCanSeeContacts(user);
     const { id } = request.params as { id: string };
-    const input = upsertContactSchema.partial().parse(request.body);
-    const existing = await prisma.contact.findUnique({ where: { id } });
-    if (!existing) throw notFound("Contatto non trovato");
-    await prisma.contact.update({ where: { id }, data: input });
-    return { id };
+    return aggiornaContattoPer(requireUser(request), id, request.body);
   });
 
   app.delete("/api/contacts/:id", async (request, reply) => {
@@ -495,4 +464,75 @@ export function crmRoutes(app: FastifyInstance): void {
     }
     return reply.status(201).send({ imported, skipped, companiesCreated });
   });
+}
+
+/**
+ * **Contatti e aziende fuori dalle rotte** (21/10/2026): le chiamano le pagine
+ * e la porta dei plugin (`plugins/plugin-crm.ts`), con le stesse regole. Un
+ * contatto si crea e si modifica con le persone visibili (scope CONTACTS);
+ * un'azienda si modifica da chi lavora il CRM.
+ */
+export async function creaContattoPer(user: User, body: unknown): Promise<{ id: string }> {
+  await assertCanSeeContacts(user);
+  const input = upsertContactSchema.parse(body);
+  await assertAziendaEsistente(input.companyId);
+  const contact = await prisma.contact.create({
+    data: {
+      firstName: input.firstName,
+      lastName: input.lastName,
+      email: input.email ?? null,
+      phone: input.phone ?? null,
+      roleTitle: input.roleTitle ?? null,
+      companyId: input.companyId ?? null,
+    },
+  });
+  return { id: contact.id };
+}
+
+export async function aggiornaContattoPer(
+  user: User,
+  id: string,
+  body: unknown,
+): Promise<{ id: string }> {
+  await assertCanSeeContacts(user);
+  const input = upsertContactSchema.partial().parse(body);
+  const existing = await prisma.contact.findUnique({ where: { id } });
+  if (!existing) throw notFound("Contatto non trovato");
+  await assertAziendaEsistente(input.companyId);
+  await prisma.contact.update({ where: { id }, data: input });
+  return { id };
+}
+
+export async function aggiornaAziendaPer(
+  user: User,
+  id: string,
+  body: unknown,
+): Promise<{ id: string }> {
+  await assertCanManageCompanies(user);
+  const input = upsertCompanySchema.partial().parse(body);
+  const existing = await prisma.company.findUnique({ where: { id } });
+  if (!existing) throw notFound("Azienda non trovata");
+  // Rinominare in un nome che è già di un'altra azienda crea il doppione.
+  if (input.name !== undefined) await assertNomeAziendaLibero(input.name, id);
+  try {
+    await prisma.company.update({ where: { id }, data: input });
+    return { id };
+  } catch (error) {
+    if (isUniqueViolation(error)) throw conflict("Esiste già un'azienda con questo nome");
+    throw error;
+  }
+}
+
+/**
+ * Un contatto si lega a un'azienda che c'è: un id sbagliato faceva fallire la
+ * chiave esterna con un errore muto (500). Con un assistente che scrive gli id
+ * è il caso più probabile, e merita la frase giusta.
+ */
+async function assertAziendaEsistente(companyId: string | null | undefined): Promise<void> {
+  if (!companyId) return;
+  const azienda = await prisma.company.findFirst({
+    where: { id: companyId, deletedAt: null },
+    select: { id: true },
+  });
+  if (!azienda) throw badRequest("Azienda non valida");
 }

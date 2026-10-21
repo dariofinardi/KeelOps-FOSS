@@ -3,7 +3,7 @@
 
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { TaskKind } from "@kancrm/shared";
 import { Button } from "@/components/ui/button";
 import { Combobox } from "@/components/ui/combobox";
@@ -17,6 +17,7 @@ import { useOptions } from "@/features/options/useOptions";
 import { useTaskDetail } from "@/features/tasks/useTasks";
 import { DealFromTaskContext } from "./deal-from-task-context";
 import { useCreateDealFromTask, useDealStages } from "./useDeals";
+import { quiConPannello, useVaiA } from "@/lib/ritorno";
 
 /** Monta il dialogo una volta sola: chi sta sotto apre con `useCreateDealFromTaskCommand`. */
 export function DealFromTaskProvider({ children }: { children: ReactNode }) {
@@ -43,7 +44,8 @@ export function DealFromTaskProvider({ children }: { children: ReactNode }) {
 function DealFromTaskDialog({ taskId, onClose }: { taskId: string; onClose: () => void }) {
   const { t } = useTranslation();
   const toast = useToast();
-  const navigate = useNavigate();
+  const vaiA = useVaiA();
+  const location = useLocation();
   const currentUser = useCurrentUser();
   const { data: task } = useTaskDetail(taskId);
   const stagesQuery = useDealStages();
@@ -103,8 +105,14 @@ function DealFromTaskDialog({ taskId, onClose }: { taskId: string; onClose: () =
         onSuccess: ({ id }) => {
           onClose();
           // Chi vede le Offerte la ritrova aperta; gli altri leggono che c'è.
-          if (currentUser.canSeeDeals) navigate(`/offerte?deal=${id}`);
-          else toast(t("Offerta creata: la segue il commerciale scelto"), "success");
+          // Arrivando all'offerta: «← Task …», e tornando il task è di nuovo aperto.
+          if (currentUser.canSeeDeals) {
+            vaiA(
+              `/offerte?deal=${id}`,
+              { etichetta: t("Task «{{titolo}}»", { titolo: task?.title ?? "" }), record: id },
+              quiConPannello(location, "task", taskId),
+            );
+          } else toast(t("Offerta creata: la segue il commerciale scelto"), "success");
         },
         onError: (err) => setError(err instanceof Error ? err.message : String(err)),
       },

@@ -34,7 +34,8 @@ describe("funzioni dell'edizione per i plugin", () => {
         string,
         unknown
       >;
-      expect(Object.keys(porta).sort()).toEqual(["aggiungi", "meseChiuso"]);
+      // scrivere (rapportini) e, dal 14/10/2026, leggere il quadro del mese (MCP-pro)
+      expect(Object.keys(porta).sort()).toEqual(["aggiungi", "meseChiuso", "quadro"]);
       expect(portaPlugin("timesheet", moduliAttivi("community"))).toBeNull();
       expect(portaPlugin("inesistente", moduliAttivi("commerciale"))).toBeNull();
     },

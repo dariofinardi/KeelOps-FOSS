@@ -270,6 +270,11 @@ export const activitySchema = z.object({
   payload: z.unknown().nullable(),
   createdAt: z.string(),
   user: userRefSchema,
+  /**
+   * Il canale da cui è arrivata la modifica, se non dall'applicazione: «MCP»
+   * per un assistente che scrive a nome della persona (21/10/2026).
+   */
+  via: z.string().nullable(),
 });
 export type Activity = z.infer<typeof activitySchema>;
 

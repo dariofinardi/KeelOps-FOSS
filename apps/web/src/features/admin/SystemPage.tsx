@@ -16,6 +16,7 @@ import { useConfirm } from "@/components/ui/confirm";
 import { AttachmentStoreSection } from "./AttachmentStoreSection";
 import { SezioniSistema } from "@/edition/slot-pagine";
 import { PluginsSection } from "./PluginsSection";
+import { FunzioniSection } from "./FunzioniSection";
 
 interface VersionEntry {
   name: string;
@@ -238,6 +239,7 @@ export function SystemPage() {
   return (
     <div className="flex max-w-2xl flex-col gap-4">
       <MaintenanceSection />
+      <FunzioniSection />
       <PluginsSection plugins={data.plugins ?? []} />
       {SezioniSistema && <SezioniSistema />}
       <AttachmentStoreSection />
