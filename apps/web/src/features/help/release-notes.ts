@@ -44,6 +44,21 @@ export interface ReleaseNote {
 /** Dalla più recente. */
 export const RELEASE_NOTES: ReleaseNote[] = [
   {
+    version: "0.15.79",
+    date: "2026-10-26",
+    items: [
+      "Security update: the libraries that handle file uploads, email, images, the database connection and the web server are on their fixed versions. Nothing changes in how you work; known weaknesses that could let a crafted upload or address slow the service down are closed.",
+    ],
+  },
+  {
+    version: "0.15.77",
+    date: "2026-10-25",
+    items: [
+      "On the phone a deal shows one part at a time — Negotiation, Numbers, Content or Chat — chosen from the bar at the bottom, as a task already did: the fields no longer get squeezed into half the screen by the conversation.",
+      "On the phone the history of a task or a deal can be read again, at the end of Content.",
+    ],
+  },
+  {
     version: "0.15.75",
     date: "2026-10-21",
     items: [

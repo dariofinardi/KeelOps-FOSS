@@ -51,6 +51,7 @@ export { AttachmentsSection } from "./AttachmentsSection";
 import { changedFieldLabels, restorePayload, snapshotOf, type TaskSnapshot } from "./task-snapshot";
 import { useModuloAcceso } from "@/lib/funzioni";
 import { TornaIndietro } from "@/components/ui/torna-indietro";
+import { SezioniMobili, useSezioneMobile } from "./SezioniMobili";
 
 interface TaskDetailDrawerProps {
   /** "over": sopra un altro pannello (un link da un'offerta), che resta sotto e ricompare. */
@@ -153,7 +154,7 @@ function DrawerContent({
    * Parte dal contesto e non dalla conversazione: si apre un task per leggerlo,
    * e chi arriva da una notifica di messaggio la trova a un dito di distanza.
    */
-  const [sezione, setSezione] = useState<Sezione>("contesto");
+  const { sezione, setSezione, mostra } = useSezioneMobile("contesto");
   /**
    * L'incontro a cui appartiene la nota che si sta scrivendo. Lo tiene il
    * pannello perché il selettore sta in *Stato e tempo* mentre il commento si
@@ -161,8 +162,6 @@ function DrawerContent({
    */
   const [incontroNota, setIncontroNota] = useState("");
   const corpoRef = useRef<HTMLDivElement>(null);
-  /** La classe che nasconde un gruppo quando sul telefono se ne guarda un altro. */
-  const mostra = (quale: Sezione) => (sezione === quale ? "" : "max-sm:hidden");
   const [logHoursOpen, setLogHoursOpen] = useState(false);
   // Convertibile/spostabile solo un task autonomo dello scadenzario o di un
   // progetto: un subtask, un'occorrenza ricorrente o un task con subtask restano
@@ -599,7 +598,9 @@ function DrawerContent({
             </div>
           </fieldset>
 
-          <div className={cn("mt-3", mostra("conversazione"))}>
+          {/* Lo storico sul telefono sta in fondo a «Contenuto»: con «Chat» il corpo
+              del pannello è nascosto, e qui non si sarebbe visto mai (25/10/2026). */}
+          <div className={cn("mt-3", mostra("contenuto"))}>
             <TaskActivitySection taskId={task.id} />
           </div>
         </div>
@@ -627,7 +628,7 @@ function DrawerContent({
           />
         </ChatDock>
 
-        <SezioniMobile valore={sezione} onChange={setSezione} commenti={task.commentCount} />
+        <SezioniMobili valore={sezione} onChange={setSezione} commenti={task.commentCount} />
       </div>
       {convertOpen && <ConvertTaskDialog task={task} onClose={() => setConvertOpen(false)} />}
       {logHoursOpen && slot.RegistraOre && (
@@ -650,67 +651,3 @@ function DrawerContent({
  * Le due destinazioni sono esclusive: un task sta in un progetto oppure è
  * collegato a un'offerta nel proprio scadenzario.
  */
-
-/** Le quattro sezioni della barra in basso, sul telefono. */
-type Sezione = "contesto" | "stato" | "contenuto" | "conversazione";
-
-const SEZIONI: Array<{ id: Sezione; etichetta: string; tono: string }> = [
-  { id: "contesto", etichetta: "Contesto", tono: "text-rose-600 dark:text-rose-400" },
-  { id: "stato", etichetta: "Stato", tono: "text-sky-600 dark:text-sky-400" },
-  { id: "contenuto", etichetta: "Contenuto", tono: "text-emerald-600 dark:text-emerald-400" },
-  {
-    id: "conversazione",
-    etichetta: "Chat",
-    tono: "text-violet-600 dark:text-violet-400",
-  },
-];
-
-/**
- * **La barra delle sezioni, solo sul telefono** (`sm:hidden`).
- *
- * A tutta pagina il pannello non ha spazio per due regioni, e ancorare la chat
- * lascerebbe ai campi mezzo schermo. Una barra sul bordo di sotto è l'unico
- * comando che si raggiunge senza cambiare presa — ed è dove sta in ogni
- * applicazione che si usa con una mano sola.
- *
- * Sopra `sm` sparisce del tutto e resta il pannello per intero: **non due
- * versioni da tenere allineate**, una che si richiude — la stessa scelta di
- * `mobile-filters`.
- */
-function SezioniMobile({
-  valore,
-  onChange,
-  commenti,
-}: {
-  valore: Sezione;
-  onChange: (s: Sezione) => void;
-  commenti: number;
-}) {
-  const { t } = useTranslation();
-  return (
-    <div className="flex flex-none gap-1.5 border-t px-2 py-1.5 sm:hidden" role="tablist">
-      {SEZIONI.map((sezione) => {
-        const attiva = sezione.id === valore;
-        return (
-          <button
-            key={sezione.id}
-            type="button"
-            role="tab"
-            aria-selected={attiva}
-            onClick={() => onChange(sezione.id)}
-            // 40px di altezza: il dito non è un puntatore (convenzione UI).
-            className={cn(
-              "flex h-10 flex-1 items-center justify-center gap-1.5 rounded-md text-xs font-medium",
-              attiva ? cn("bg-muted", sezione.tono) : "text-muted-foreground",
-            )}
-          >
-            {t(sezione.etichetta)}
-            {sezione.id === "conversazione" && commenti > 0 && (
-              <span className="text-[11px] opacity-70">{commenti}</span>
-            )}
-          </button>
-        );
-      })}
-    </div>
-  );
-}

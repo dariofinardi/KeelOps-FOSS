@@ -95,3 +95,36 @@ test("su mobile nessuna vista scorre di lato", async ({ page }) => {
   }
   expect(sforano, "viste che sforano in larghezza su uno schermo da 390px").toEqual([]);
 });
+
+/**
+ * **L'offerta sul telefono, una sezione per volta** (25/10/2026). Con la chat
+ * ancorata in fondo i campi avevano mezzo schermo e sotto la chat restava il
+ * vuoto: ora la barra in basso sceglie fra Trattativa, Numeri, Contenuto e Chat.
+ */
+test("su mobile l'offerta mostra una sezione per volta e la chat non schiaccia i campi", async ({
+  page,
+}) => {
+  await login(page);
+  const creata = await page.request.post("/api/deals", { data: { title: "Offerta dal telefono" } });
+  expect(creata.ok()).toBe(true);
+  const { id } = (await creata.json()) as { id: string };
+  await page.goto(`/offerte?deal=${id}`);
+
+  const pannello = page.getByRole("dialog", { name: "Offerta dal telefono" });
+  const campoFase = pannello.getByText("Fase", { exact: true });
+  const scriviCommento = pannello.getByPlaceholder(/Scrivi un commento/);
+  await expect(campoFase).toBeVisible();
+  await expect(scriviCommento).toBeHidden();
+
+  await pannello.getByRole("tab", { name: "Chat" }).click();
+  await expect(scriviCommento).toBeVisible();
+  await expect(campoFase).toBeHidden();
+
+  await pannello.getByRole("tab", { name: "Numeri" }).click();
+  await expect(pannello.getByText("Probabilità (%)")).toBeVisible();
+  await expect(scriviCommento).toBeHidden();
+
+  // lo storico si legge in fondo a «Contenuto» (con «Chat» il corpo è nascosto)
+  await pannello.getByRole("tab", { name: "Contenuto" }).click();
+  await expect(pannello.getByRole("heading", { name: "Attività" })).toBeVisible();
+});

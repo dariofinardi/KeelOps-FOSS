@@ -56,6 +56,16 @@ import { moduloAcceso } from "@/lib/funzioni";
 import { TornaIndietro } from "@/components/ui/torna-indietro";
 import { quiConPannello, useVaiA } from "@/lib/ritorno";
 import { useOpenLinkedTask } from "@/features/tasks/linked-task-context";
+import { cn } from "@/lib/utils";
+import { SezioniMobili, useSezioneMobile, type VoceSezione } from "@/features/tasks/SezioniMobili";
+
+/** Le sezioni dell'offerta sul telefono: le sue tre bande, e la chat. */
+const SEZIONI_DELL_OFFERTA: readonly VoceSezione[] = [
+  { id: "contesto", etichetta: "Trattativa" },
+  { id: "stato", etichetta: "Numeri" },
+  { id: "contenuto", etichetta: "Contenuto" },
+  { id: "conversazione", etichetta: "Chat" },
+];
 
 /** In un'offerta la data che cambia è la chiusura prevista, non una scadenza. */
 const DEAL_ACTIVITY_LABELS = {
@@ -213,6 +223,9 @@ function DrawerContent({
   const [quickCompanyOpen, setQuickCompanyOpen] = useState(false);
   const [quickContactOpen, setQuickContactOpen] = useState(false);
   const corpoRef = useRef<HTMLDivElement>(null);
+  // Sul telefono una sezione per volta, come nel task (25/10/2026): con la
+  // chat ancorata i campi avevano mezzo schermo.
+  const { sezione, setSezione, mostra } = useSezioneMobile("contesto");
   const dealIdRef = useRef(deal.id);
   // Fotografia all'apertura: ogni campo si salva da solo, questa è la via per
   // tornare indietro. Si riscatta quando il pannello passa a un'altra offerta.
@@ -327,7 +340,13 @@ function DrawerContent({
         </div>
       </header>
 
-      <div ref={corpoRef} className="min-h-0 flex-1 overflow-y-auto p-4">
+      <div
+        ref={corpoRef}
+        className={cn(
+          "min-h-0 flex-1 overflow-y-auto p-4",
+          sezione === "conversazione" && "max-sm:hidden",
+        )}
+      >
         {!canEdit && (
           <p className="mb-3 rounded-md bg-muted/60 px-3 py-2 text-xs text-muted-foreground">
             {t(
@@ -360,7 +379,12 @@ function DrawerContent({
           ticket (21/08/2026): un'offerta ha tre discorsi dentro — con chi si
           tratta, quanto vale, e cosa si è detto — e separarli solo con un po'
           di spazio li faceva leggere come un modulo unico. */}
-        <PanelGroup tone="rose" title={t("Trattativa")} meta={t("con chi")}>
+        <PanelGroup
+          tone="rose"
+          title={t("Trattativa")}
+          meta={t("con chi")}
+          className={mostra("contesto")}
+        >
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="flex flex-col gap-1.5">
               <Label>{t("Fase")}</Label>
@@ -474,7 +498,12 @@ function DrawerContent({
           </div>
         </PanelGroup>
 
-        <PanelGroup tone="sky" title={t("Numeri")} meta={t("quanto e quando")} className="mt-3">
+        <PanelGroup
+          tone="sky"
+          title={t("Numeri")}
+          meta={t("quanto e quando")}
+          className={cn("mt-3", mostra("stato"))}
+        >
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="flex flex-col gap-1.5">
               <Label>{t("Valore (€)")}</Label>
@@ -524,7 +553,12 @@ function DrawerContent({
         {/* Espone l'offerta ai monitor vendite: finché è spenta, per loro non esiste.
             C'è con l'area investitori (08/10/2026). */}
         {moduloAcceso(currentUser, "area-investitori") && (
-          <label className="mt-4 flex items-start gap-2 rounded-md border p-3 text-sm">
+          <label
+            className={cn(
+              "mt-4 flex items-start gap-2 rounded-md border p-3 text-sm",
+              mostra("stato"),
+            )}
+          >
             <input
               type="checkbox"
               className="mt-0.5"
@@ -550,7 +584,7 @@ function DrawerContent({
         )}
 
         {deal.stage.isLost && (
-          <div className="mt-4 flex flex-col gap-1.5">
+          <div className={cn("mt-4 flex flex-col gap-1.5", mostra("stato"))}>
             <Label>{t("Motivo della perdita")}</Label>
             <textarea
               className="min-h-16 rounded-md border bg-background p-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -565,7 +599,7 @@ function DrawerContent({
           tone="emerald"
           title={t("Contenuto")}
           meta={t("descrizione e allegati")}
-          className="mt-3"
+          className={cn("mt-3", mostra("contenuto"))}
         >
           <div className="flex flex-col gap-1.5">
             <Label>{t("Descrizione")}</Label>
@@ -582,15 +616,30 @@ function DrawerContent({
           <AttachmentsSection task={deal} />
         </PanelGroup>
 
-        <TaskActivitySection taskId={deal.id} labels={DEAL_ACTIVITY_LABELS} />
+        {/* Sul telefono in fondo a «Contenuto», come nel task: con «Chat» il
+            corpo è nascosto. */}
+        <div className={mostra("contenuto")}>
+          <TaskActivitySection taskId={deal.id} labels={DEAL_ACTIVITY_LABELS} />
+        </div>
       </div>
 
       {/* La conversazione ancorata e regolabile, come nel task e nella
           richiesta: prima scorreva via insieme ai campi, e su un'offerta con
           venti messaggi la si trovava solo in fondo (24/08/2026). */}
-      <ChatDock count={deal.commentCount} recordId={deal.id} bodyRef={corpoRef}>
+      <ChatDock
+        count={deal.commentCount}
+        recordId={deal.id}
+        bodyRef={corpoRef}
+        mobileVisible={sezione === "conversazione"}
+      >
         <CommentsSection task={deal} stickyInput />
       </ChatDock>
+      <SezioniMobili
+        sezioni={SEZIONI_DELL_OFFERTA}
+        valore={sezione}
+        onChange={setSezione}
+        commenti={deal.commentCount}
+      />
 
       <QuickAddCompanyDialog
         open={quickCompanyOpen}
