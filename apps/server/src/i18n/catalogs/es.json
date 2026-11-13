@@ -356,5 +356,7 @@
   "I progetti non sono attivi in questa installazione": "Los proyectos no están activos en esta instalación",
   "Funzione sconosciuta: {{chiave}}": "Función desconocida: {{chiave}}",
   "Azienda non valida": "Empresa no válida",
-  "Un'offerta si modifica con i campi dell'offerta, non come task": "Una oferta se modifica con sus propios campos, no como tarea"
+  "Un'offerta si modifica con i campi dell'offerta, non come task": "Una oferta se modifica con sus propios campos, no como tarea",
+  "Una richiesta la eliminano l'amministratore e il manager del progetto": "Una solicitud la pueden eliminar el administrador y el responsable del proyecto",
+  "Lo eliminano l'amministratore, il manager del progetto o chi ha creato il task": "Lo pueden eliminar el administrador, el responsable del proyecto o quien creó la tarea"
 }

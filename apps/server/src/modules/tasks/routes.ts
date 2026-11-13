@@ -60,7 +60,7 @@ import { dettaglioPerChiGuarda } from "./comment-counts";
 
 // I controlli di accesso vivono in ./access; il re-export mantiene stabili gli
 // import degli altri moduli (meetings, attachments, timesheet).
-import { assertTaskEditAccess, assertTaskViewAccess } from "./access";
+import { assertTaskDeleteAccess, assertTaskEditAccess, assertTaskViewAccess } from "./access";
 import { ensureMeeting, loadTaskDetail } from "./common";
 import { applyTaskUpdate } from "./update-service";
 import { createTaskAs } from "./create";
@@ -566,12 +566,10 @@ export function taskRoutes(app: FastifyInstance): void {
     const existing = await prisma.task.findUnique({ where: { id } });
     if (!existing) throw notFound("Task non trovato");
     await assertTaskEditAccess(user, existing);
+    // Prima gli agganci (il modulo ticket dice «solo l'admin», con la sua frase),
+    // poi la decisione del cestino: la stessa di `canDelete`, non una copia.
     for (const aggancio of agganciTask()) await aggancio.primaDiEliminare?.(existing, user);
-
-    // Eliminazione riservata a chi ha creato il task (o a un amministratore).
-    if (user.role !== UserRole.ADMIN && existing.creatorId !== user.id) {
-      throw forbidden("Solo l'amministratore o chi ha creato il task può eliminarlo");
-    }
+    await assertTaskDeleteAccess(user, existing);
 
     // Soft delete: il task (e i suoi subtask) vengono spostati nel cestino. Il
     // record resta, quindi la riga di log sopravvive e racconta chi l'ha eliminato.

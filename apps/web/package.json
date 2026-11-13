@@ -1,6 +1,6 @@
 {
   "name": "@kancrm/web",
-  "version": "0.15.79",
+  "version": "0.15.81",
   "private": true,
   "type": "module",
   "scripts": {
@@ -50,7 +50,7 @@
     "tailwindcss": "^4.0.0",
     "tw-animate-css": "^1.2.0",
     "typescript": "^5.7.2",
-    "vite": "^6.0.0",
+    "vite": "^6.4.6",
     "vitest": "^3.0.0"
   }
 }

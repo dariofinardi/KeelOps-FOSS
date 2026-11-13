@@ -326,13 +326,24 @@ function evaluateEdit(
  * l'amministratore). Deciso esplicitamente: chi lavora un task non deve poterlo
  * far sparire a chi lo ha aperto.
  */
+/**
+ * **Manager del progetto del task** (membro con ruolo MANAGER): risponde di
+ * quello che c'è dentro, e dal 26/10/2026 può eliminarne i task — anche quelli
+ * nati da un ticket (regola del modulo ticket). Lo scope Progetti non basta:
+ * dà al più EDITOR, che lavora i task ma non li fa sparire.
+ */
+export function isProjectManager(ctx: TaskAccessContext, task: TaskAccessInfo): boolean {
+  return task.projectId !== null && ctx.projectRoles.get(task.projectId) === ProjectRole.MANAGER;
+}
+
 function evaluateDelete(ctx: TaskAccessContext, task: TaskAccessInfo, canEdit: boolean): boolean {
   if (!canEdit) return false;
   for (const regola of regoleAccessoTask()) {
     const esito = regola.eliminazione?.(ctx, task);
     if (esito !== null && esito !== undefined) return esito;
   }
-  return ctx.isAdmin || task.creatorId === ctx.user.id;
+  // Chi l'ha aperto, l'amministratore, e il manager del progetto (26/10/2026).
+  return ctx.isAdmin || task.creatorId === ctx.user.id || isProjectManager(ctx, task);
 }
 
 /** Cosa può fare l'utente su questo task. Sincrona: il contesto è già in mano. */

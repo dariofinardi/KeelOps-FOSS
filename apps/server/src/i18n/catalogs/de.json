@@ -356,5 +356,7 @@
   "I progetti non sono attivi in questa installazione": "Projekte sind in dieser Installation nicht aktiviert",
   "Funzione sconosciuta: {{chiave}}": "Unbekannte Funktion: {{chiave}}",
   "Azienda non valida": "Ungültige Firma",
-  "Un'offerta si modifica con i campi dell'offerta, non come task": "Ein Angebot wird über seine eigenen Felder geändert, nicht als Aufgabe"
+  "Un'offerta si modifica con i campi dell'offerta, non come task": "Ein Angebot wird über seine eigenen Felder geändert, nicht als Aufgabe",
+  "Una richiesta la eliminano l'amministratore e il manager del progetto": "Eine Anfrage können der Administrator und der Projektmanager löschen",
+  "Lo eliminano l'amministratore, il manager del progetto o chi ha creato il task": "Löschen können es der Administrator, der Projektmanager oder wer die Aufgabe erstellt hat"
 }

@@ -44,6 +44,20 @@ export interface ReleaseNote {
 /** Dalla più recente. */
 export const RELEASE_NOTES: ReleaseNote[] = [
   {
+    version: "0.15.81",
+    date: "2026-11-13",
+    items: [
+      "Security update of the libraries that serve the application's files and read XML. Nothing changes in how you work.",
+    ],
+  },
+  {
+    version: "0.15.80",
+    date: "2026-10-26",
+    items: [
+      "A project manager can now delete the tasks of their project, not only the ones they created.",
+    ],
+  },
+  {
     version: "0.15.79",
     date: "2026-10-26",
     items: [

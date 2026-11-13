@@ -56,3 +56,21 @@ export async function assertTaskEditAccess(user: User, task: TaskAccessInfo): Pr
   const verdict = evaluateTaskAccess(await taskAccessContext(user), task);
   if (verdict.editDenial) deny(verdict.editDenial);
 }
+
+/**
+ * **Eliminazione: la stessa decisione che mostra il cestino** (26/10/2026).
+ * La rotta aveva la sua copia della regola («amministratore o creatore»),
+ * accanto a `canDelete` che decide il pulsante: due regole, e sulle richieste
+ * nate dal form divergevano. Ora il server chiede a `evaluateTaskAccess`, con le
+ * regole dei moduli comprese.
+ */
+export async function assertTaskDeleteAccess(user: User, task: TaskAccessInfo): Promise<void> {
+  const verdict = evaluateTaskAccess(await taskAccessContext(user), task);
+  if (verdict.editDenial) deny(verdict.editDenial);
+  if (!verdict.canDelete) {
+    deny({
+      status: 403,
+      message: "Lo eliminano l'amministratore, il manager del progetto o chi ha creato il task",
+    });
+  }
+}

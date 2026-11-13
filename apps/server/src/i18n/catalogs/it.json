@@ -80,5 +80,7 @@
   "I progetti non sono attivi in questa installazione": "I progetti non sono attivi in questa installazione",
   "Funzione sconosciuta: {{chiave}}": "Funzione sconosciuta: {{chiave}}",
   "Azienda non valida": "Azienda non valida",
-  "Un'offerta si modifica con i campi dell'offerta, non come task": "Un'offerta si modifica con i campi dell'offerta, non come task"
+  "Un'offerta si modifica con i campi dell'offerta, non come task": "Un'offerta si modifica con i campi dell'offerta, non come task",
+  "Una richiesta la eliminano l'amministratore e il manager del progetto": "Una richiesta la eliminano l'amministratore e il manager del progetto",
+  "Lo eliminano l'amministratore, il manager del progetto o chi ha creato il task": "Lo eliminano l'amministratore, il manager del progetto o chi ha creato il task"
 }
