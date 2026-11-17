@@ -358,5 +358,6 @@
   "Azienda non valida": "Invalid company",
   "Un'offerta si modifica con i campi dell'offerta, non come task": "A deal is changed through its own fields, not as a task",
   "Una richiesta la eliminano l'amministratore e il manager del progetto": "A request can be deleted by the administrator and the project manager",
-  "Lo eliminano l'amministratore, il manager del progetto o chi ha creato il task": "It can be deleted by the administrator, the project manager or whoever created the task"
+  "Lo eliminano l'amministratore, il manager del progetto o chi ha creato il task": "It can be deleted by the administrator, the project manager or whoever created the task",
+  "{{user}} non vede lo scadenzario amministrativo di tutti: può assegnare il task solo a sé": "{{user}} does not see everyone's administrative deadlines: the task can only be assigned to themselves"
 }

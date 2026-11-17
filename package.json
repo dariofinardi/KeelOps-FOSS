@@ -2,7 +2,7 @@
   "name": "kancrm",
   "private": true,
   "type": "module",
-  "version": "0.15.81",
+  "version": "0.15.82",
   "engines": {
     "node": ">=20"
   },

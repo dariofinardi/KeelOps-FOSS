@@ -1,6 +1,6 @@
 {
   "name": "@kancrm/shared",
-  "version": "0.15.81",
+  "version": "0.15.82",
   "private": true,
   "type": "module",
   "exports": {

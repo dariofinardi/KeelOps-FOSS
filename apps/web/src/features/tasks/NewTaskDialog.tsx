@@ -40,7 +40,7 @@ export function NewTaskDialog({ open, onClose }: { open: boolean; onClose: () =>
   const attachments = useAttachmentStaging();
   const [busy, setBusy] = useState(false);
   const { data: allStatuses } = useTaskStatuses();
-  const dealsData = useDeals({ includeClosed: false, pageSize: 200 }, currentUser.canSeeDeals).data;
+  const dealsData = useDeals({ includeClosed: true, pageSize: 500 }, currentUser.canSeeDeals).data;
   const deals = currentUser.canSeeDeals ? (dealsData?.items ?? []) : [];
 
   const [title, setTitle] = useState("");
@@ -215,9 +215,13 @@ export function NewTaskDialog({ open, onClose }: { open: boolean; onClose: () =>
         {context === "deal" && (
           <div className="flex flex-col gap-1.5">
             <Label>{t("Offerta")}</Label>
+            {/* Anche le offerte chiuse (17/11/2026): il lavoro su un'offerta vinta
+                — la fattura, l'avvio — nasce proprio dopo la chiusura. Le altre
+                tendine (ricorrenze, progetti, conversione) le offrivano già. */}
             <DealCombobox
               value={relatedDealId || null}
               onChange={(id) => setRelatedDealId(id ?? "")}
+              includeClosed
             />
           </div>
         )}

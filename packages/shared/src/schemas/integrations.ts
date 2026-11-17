@@ -70,6 +70,12 @@ export const integrationCreateTaskSchema = z.object({
   dueDate: dateOnly,
   /** Email del referente; senza, il manager del gruppo amministrativo. */
   supervisor: z.string().email().optional(),
+  /**
+   * Email dell'assegnatario (17/11/2026). Senza, il task nasce **non assegnato**
+   * e lo prende chi lo lavora: è il caso delle fatture «da assegnare». Non è
+   * `onBehalfOf`, che dice per conto di chi si crea, cioè autore e permessi.
+   */
+  assignee: z.string().email().optional(),
 });
 export type IntegrationCreateTaskInput = z.infer<typeof integrationCreateTaskSchema>;
 

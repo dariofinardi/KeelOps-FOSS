@@ -44,6 +44,13 @@ export interface ReleaseNote {
 /** Dalla più recente. */
 export const RELEASE_NOTES: ReleaseNote[] = [
   {
+    version: "0.15.82",
+    date: "2026-11-17",
+    items: [
+      "When creating a task linked to a deal you can now also choose deals already won or lost, as you already could for recurring deadlines.",
+    ],
+  },
+  {
     version: "0.15.81",
     date: "2026-11-13",
     items: [

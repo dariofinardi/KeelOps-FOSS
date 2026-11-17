@@ -35,9 +35,15 @@ import { notify } from "../notifications/service";
  * vedi tasks/company.ts): lo passa solo l'API delle integrazioni, che crea
  * scadenze amministrative intestate a un cliente.
  */
+export type CreateTaskOptions = {
+  /** Un assegnatario che chi crea non può scegliere risponde 400 invece di sparire. */
+  rejectForeignAssignee?: boolean;
+};
+
 export async function createTaskAs(
   user: User,
   input: CreateTaskInput & { companyId?: string | null },
+  options: CreateTaskOptions = {},
 ) {
 
 // Contesto del task:
@@ -90,7 +96,18 @@ const statusCategory = await statusCategoryOfTask({
 // si assegnano task ad altri (al massimo a sé).
 const personalAdmin = kind === TaskKind.ADMIN && !seesAllAdmin;
 let assigneeId = input.assigneeId ?? null;
-if (personalAdmin && assigneeId && assigneeId !== user.id) assigneeId = null;
+if (personalAdmin && assigneeId && assigneeId !== user.id) {
+  // Il pannello web non offre altri nomi a chi non può: lì il valore si scarta.
+  // Chi integra invece l'ha scritto apposta, e scartarlo in silenzio gli
+  // restituirebbe un task diverso da quello chiesto (17/11/2026).
+  if (options.rejectForeignAssignee) {
+    throw badRequest(
+      "{{user}} non vede lo scadenzario amministrativo di tutti: può assegnare il task solo a sé",
+      { user: user.email },
+    );
+  }
+  assigneeId = null;
+}
 // Referente di default = chi crea. Un task senza supervisore non ha nessuno
 // che ne risponde, e i "veloci" (aggiungi task da un'offerta, dal progetto)
 // nascevano orfani. Chi non lo vuole manda esplicitamente null dal pannello:
