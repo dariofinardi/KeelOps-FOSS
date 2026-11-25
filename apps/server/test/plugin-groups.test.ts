@@ -25,6 +25,7 @@ const {
   leggiGruppoDelPlugin,
   membriGruppoDelPlugin,
   utenteNelGruppoDelPlugin,
+  utenteResponsabileDelleAree,
 } = await import("../src/plugins/plugin-groups");
 const { creaTaskPerPlugin } = await import("../src/plugins/plugin-tasks");
 
@@ -179,5 +180,32 @@ describe("il marchio su ciò che il plugin lascia nel core", () => {
       task: 0,
       allegati: 0,
     });
+  });
+});
+
+describe("i responsabili delle aree (ui.responsabiliDi)", () => {
+  it("vale chi guida un gruppo che governa l'area, non chi ci sta e basta", async () => {
+    const sviluppo = await prisma.group.create({
+      data: { name: "Sviluppatori", managedArea: "DEV" },
+    });
+    const amministrativo = await prisma.group.create({
+      data: { name: "Amministrativo", managedArea: "ADMIN" },
+    });
+    await prisma.groupMember.createMany({
+      data: [
+        { groupId: sviluppo.id, userId: ids.anna!, isManager: true },
+        { groupId: sviluppo.id, userId: ids.bruno!, isManager: false },
+        { groupId: amministrativo.id, userId: ids.capo!, isManager: true },
+      ],
+    });
+    expect(await utenteResponsabileDelleAree(ids.anna!, ["DEV", "SALES"])).toBe(true);
+    // membro ma non responsabile
+    expect(await utenteResponsabileDelleAree(ids.bruno!, ["DEV", "SALES"])).toBe(false);
+    // responsabile, ma di un'altra area
+    expect(await utenteResponsabileDelleAree(ids.capo!, ["DEV", "SALES"])).toBe(false);
+    // il nome del gruppo non conta: rinominato, vale ancora
+    await prisma.group.update({ where: { id: sviluppo.id }, data: { name: "Tecnici" } });
+    expect(await utenteResponsabileDelleAree(ids.anna!, ["DEV"])).toBe(true);
+    expect(await utenteResponsabileDelleAree(ids.anna!, [])).toBe(false);
   });
 });

@@ -15,6 +15,7 @@ APIs (the osTicket integration) are unrelated and do not change.
 | `mcp/`       | MCP server with OAuth2 to connect Claude, ChatGPT, Mistral                                                                                          |
 | `MCP-pro/`   | the pro version of the connector, in a separate repository (linked here with a symlink)                                                             |
 | `Presenze/`  | the attendance and absence calendar: the interface to the core's absence register (`Absence`, `/api/absences`); same separate repository as MCP-pro |
+| `Consensi/`  | the cookie choices collected by Jugaad Consent on the company websites, read from the Google Cloud Storage bucket of the registers; same separate repository as MCP-pro |
 
 ## keelops-sdk
 
@@ -384,7 +385,10 @@ forbidden import.
 `ruoli` (roles: `["ADMIN", "MEMBER"]`; absent = all internal users),
 `soloManager`, `soloGruppo` (since 22/09/2026: visible to members of the
 plugin's group, and to the administrator, who is the one who puts people in
-it). A value the core does not understand does not break the menu: it falls
+it), `responsabiliDi` (since 25/11/2026: a list of areas — `DEV`, `SALES`… —
+and the entry is visible to the leads of the groups governing them, and to the
+administrator; the group is found by `Group.managedArea`, never by name. The
+core hides the entry; the plugin checks the same rule in its routes). A value the core does not understand does not break the menu: it falls
 back to the default and says so in the log.
 
 ### A dedicated button for an anchor

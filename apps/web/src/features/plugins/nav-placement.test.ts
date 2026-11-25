@@ -20,6 +20,8 @@ const plugin = (nome: string, extra: Partial<PluginUiEntry> = {}): PluginUiEntry
   soloManager: false,
   soloGruppo: false,
   nelGruppo: null,
+  responsabiliDi: null,
+  responsabile: null,
   nick: null,
   versione: "1.0.0",
   schemaVersion: null,
@@ -93,6 +95,14 @@ describe("dove va la voce di un plugin", () => {
     expect(vedeIlPlugin(plugin("q", { soloGruppo: true, nelGruppo: null }), membro)).toBe(true);
     // e senza `soloGruppo` la domanda non si pone
     expect(vedeIlPlugin(plugin("q", { nelGruppo: false }), membro)).toBe(true);
+  });
+
+  it("i responsabili di certe aree: la voce la vede solo chi il server riconosce", () => {
+    const tecnici = { responsabiliDi: ["DEV", "SALES"] };
+    expect(vedeIlPlugin(plugin("c", { ...tecnici, responsabile: false }), membro)).toBe(false);
+    expect(vedeIlPlugin(plugin("c", { ...tecnici, responsabile: true }), membro)).toBe(true);
+    // un core più vecchio non risponde: la voce resta, il plugin rifiuta da sé
+    expect(vedeIlPlugin(plugin("c", { ...tecnici, responsabile: null }), membro)).toBe(true);
   });
 
   it("ruoli e soloManager tolgono la voce a chi non deve vederla", () => {

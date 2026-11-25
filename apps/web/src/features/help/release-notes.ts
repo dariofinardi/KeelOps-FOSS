@@ -44,6 +44,20 @@ export interface ReleaseNote {
 /** Dalla più recente. */
 export const RELEASE_NOTES: ReleaseNote[] = [
   {
+    version: "0.20.84",
+    date: "2026-11-25",
+    items: [
+      "An extension can now be shown in the menu only to the leads of some groups — for example the technical and the sales group — and to administrators.",
+    ],
+  },
+  {
+    version: "0.20.83",
+    date: "2026-11-18",
+    items: [
+      "A long description in the new task, deal and project windows now scrolls inside its own box, sized to your screen, instead of pushing the other fields and the buttons out of view.",
+    ],
+  },
+  {
     version: "0.15.82",
     date: "2026-11-17",
     items: [

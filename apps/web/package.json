@@ -1,6 +1,6 @@
 {
   "name": "@kancrm/web",
-  "version": "0.15.82",
+  "version": "0.20.84",
   "private": true,
   "type": "module",
   "scripts": {

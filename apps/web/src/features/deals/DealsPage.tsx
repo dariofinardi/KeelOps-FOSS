@@ -1102,6 +1102,8 @@ function NewDealDialog({ open, onClose }: { open: boolean; onClose: () => void }
           onChange={setDescription}
           dialogTitle={title.trim() || t("Nuova offerta")}
           placeholder={t("Aggiungi una descrizione…")}
+          // Misurati attorno al campo: 686px, 819 sul telefono.
+          altezzaFissa={{ attorno: 43.5, attornoTelefono: 52 }}
         />
 
         {error && <p className="text-sm text-destructive">{error}</p>}

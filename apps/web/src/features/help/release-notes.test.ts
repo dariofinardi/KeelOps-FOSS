@@ -41,13 +41,14 @@ describe("note di rilascio", () => {
      * indietro — ed è lo stato normale, non un errore (04/09/2026: ha fermato
      * un deploy vero).
      *
-     * Quel che resta vietato è raccontare una build lontana: due minor avanti,
-     * o dentro lo stesso minor più di una build avanti.
+     * Quel che resta vietato è raccontare una build lontana. Il **contatore di
+     * build** non si azzera cambiando minor (0.7.21 → 0.8.22), quindi è lui a
+     * dirlo: una sola build avanti, qualunque sia il salto di minor scelto —
+     * anche di più d'uno, come 0.15.82 → 0.20.83 (18/11/2026), che prima
+     * questo test rifiutava per un vincolo che il deploy non ha.
      */
-    if (notaMinore === appMinore) {
+    if (notaMinore >= appMinore) {
       expect(notaBuild - appBuild).toBeLessThanOrEqual(1);
-    } else if (notaMinore > appMinore) {
-      expect(notaMinore - appMinore).toBe(1);
     }
     // Una nota INDIETRO (l'applicazione ha saltato un minor senza una nota
     // nuova) non racconta niente che non esista: è un promemoria, non un errore.

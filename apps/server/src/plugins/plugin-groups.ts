@@ -47,7 +47,8 @@ export interface NuovoGruppoDaPlugin {
 const CHIAVE_VALIDA = /^[a-z][a-z0-9_-]{0,63}$/;
 
 function controlla(nick: string | null | undefined, chiave: string): string {
-  if (!nick) throw new Error("un gruppo di plugin vuole il nick del plugin: dichiaralo nel manifesto");
+  if (!nick)
+    throw new Error("un gruppo di plugin vuole il nick del plugin: dichiaralo nel manifesto");
   if (!CHIAVE_VALIDA.test(chiave)) {
     throw new Error(`chiave "${chiave}" non valida: minuscole, cifre, trattino e trattino basso`);
   }
@@ -170,6 +171,24 @@ export async function inventarioDelPlugin(nick: string): Promise<{
  * mette dentro gli altri, e una voce che sparisce a chi deve configurarla è
  * un vicolo cieco.
  */
+/**
+ * **Questa persona guida un gruppo che governa una di queste aree?** È la
+ * regola di `ui.responsabiliDi` (25/11/2026): il gruppo si riconosce dall'area
+ * che governa (`Group.managedArea`), non dal nome, che l'amministratore può
+ * cambiare quando vuole. L'amministratore lo decide chi chiama.
+ */
+export async function utenteResponsabileDelleAree(
+  userId: string,
+  aree: readonly string[],
+): Promise<boolean> {
+  if (aree.length === 0) return false;
+  const riga = await prisma.groupMember.findFirst({
+    where: { userId, isManager: true, group: { managedArea: { in: [...aree] } } },
+    select: { userId: true },
+  });
+  return Boolean(riga);
+}
+
 export async function utenteNelGruppoDelPlugin(nick: string, userId: string): Promise<boolean> {
   const riga = await prisma.groupMember.findFirst({
     where: { userId, group: { pluginNick: nick } },

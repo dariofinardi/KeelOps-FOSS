@@ -173,6 +173,7 @@ use `ctx.sessionUser`.
 | `dopo` | after | `ui` |
 | `ruoli` | roles | `ui` |
 | `soloManager`, `soloGruppo` | managers only, group only | `ui` |
+| `responsabiliDi` | leads of groups governing these areas only | `ui` |
 | `barra` (`stato`, `pannello`) | bar button (state, panel) | `ui` |
 | `tono` (`acceso`, `spento`, `bloccato`, `nessuno`), `lampeggia` | tone (on, off, locked, none), blink | bar state |
 | `strumenti` (`parametri`, `esegui`) | tools (parameters, run) | `create()`, `ctx.plugins` |

@@ -41,6 +41,8 @@ export function vedeIlPlugin(plugin: PluginUiEntry, utente: Osservatore): boolea
   if (plugin.ruoli && !plugin.ruoli.includes(utente.role)) return false;
   if (plugin.soloManager && !utente.isManager) return false;
   if (plugin.soloGruppo && plugin.nelGruppo === false) return false;
+  // Come `nelGruppo`: lo calcola il server (`ui.responsabiliDi`), qui si applica.
+  if (plugin.responsabiliDi && plugin.responsabile === false) return false;
   return true;
 }
 

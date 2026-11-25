@@ -115,6 +115,7 @@ will gate doors as the SDK grows):
 | `ruoli` | string[] | all internal | **Roles** who see the entry: `ADMIN`, `MEMBER`. Customers of the portal never see plugins. |
 | `soloManager` | boolean | `false` | Only for people who lead a group or a project. |
 | `soloGruppo` | boolean | `false` | **Only the group**: only members of the plugin's own group (see [groups](07-core-doors.md#groups)) — and administrators, who are the ones putting people in it. Anchors stay visible to everyone. |
+| `responsabiliDi` | string[] | — | **Only the leads of some areas**: people who lead (`isManager`) a group governing one of these areas (`Group.managedArea`: `ADMIN`, `SALES`, `DEV`, `QUALITY`, `GENERAL`), and administrators. The group is recognised by its area, not by its name, which an administrator may change. Hides the menu entry only: **check the same rule in your routes** (a join on `GroupMember` and `Group`, the latter quoted with `db.sql.ident`). Since 25/11/2026. |
 | `barra` | object | — | **A button in the top bar**: `{ icona, stato, pannello }`. See [the bar button](05-pages.md#the-bar-button). |
 
 ## Anchors

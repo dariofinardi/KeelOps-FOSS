@@ -8,6 +8,7 @@ import { createHash } from "node:crypto";
 import type { IncomingMessage } from "node:http";
 import type { FastifyInstance } from "fastify";
 import {
+  ActivityCategory,
   NAV_AREA_KEYS,
   PLUGIN_UI_SECTIONS,
   UserRole,
@@ -39,6 +40,7 @@ import {
   leggiGruppoDelPlugin,
   membriGruppoDelPlugin,
   utenteNelGruppoDelPlugin,
+  utenteResponsabileDelleAree,
 } from "./plugin-groups";
 
 /**
@@ -343,6 +345,21 @@ export function leggiVoceUi(
     avvisa(`plugin "${name}": ui.ruoli dev'essere un elenco, lo ignoro`);
   }
 
+  let responsabiliDi: string[] | null = null;
+  if (Array.isArray(ui.responsabiliDi)) {
+    const aree = Object.values(ActivityCategory) as string[];
+    const validi = ui.responsabiliDi.map(String).filter((a) => aree.includes(a));
+    const scartati = ui.responsabiliDi.map(String).filter((a) => !aree.includes(a));
+    if (scartati.length > 0) {
+      avvisa(
+        `plugin "${name}": ui.responsabiliDi ignora ${scartati.join(", ")} (solo ${aree.join(", ")})`,
+      );
+    }
+    responsabiliDi = validi.length > 0 ? validi : null;
+  } else if (ui.responsabiliDi !== undefined && ui.responsabiliDi !== null) {
+    avvisa(`plugin "${name}": ui.responsabiliDi dev'essere un elenco di aree, lo ignoro`);
+  }
+
   return {
     nome: name,
     titolo: String(manifest.titolo ?? name),
@@ -360,6 +377,9 @@ export function leggiVoceUi(
     // riempie `/api/plugins/ui`, che conosce la sessione.
     soloGruppo: ui.soloGruppo === true,
     nelGruppo: null,
+    // Come `nelGruppo`: chi guarda lo sa solo `/api/plugins/ui`.
+    responsabiliDi,
+    responsabile: null,
     nick: manifest.nick ?? null,
     versione: String(manifest.versione ?? "0.0.0"),
     schemaVersion: manifest.nick ? Number(manifest.schemaVersion ?? 0) : null,
@@ -981,9 +1001,18 @@ export async function registerPluginHost(
       mounted
         .filter((voce) => !pluginDisattivato(voce.nome))
         .map(async (voce) => {
-          if (!voce.soloGruppo || !voce.nick || !user) return voce;
-          const dentro = amministratore || (await utenteNelGruppoDelPlugin(voce.nick, user.id));
-          return { ...voce, nelGruppo: dentro };
+          if (!user) return voce;
+          let esito = voce;
+          if (voce.soloGruppo && voce.nick) {
+            const dentro = amministratore || (await utenteNelGruppoDelPlugin(voce.nick, user.id));
+            esito = { ...esito, nelGruppo: dentro };
+          }
+          if (voce.responsabiliDi) {
+            const responsabile =
+              amministratore || (await utenteResponsabileDelleAree(user.id, voce.responsabiliDi));
+            esito = { ...esito, responsabile };
+          }
+          return esito;
         }),
     );
     return { plugins };

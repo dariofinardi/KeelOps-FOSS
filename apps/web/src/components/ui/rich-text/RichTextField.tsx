@@ -66,6 +66,8 @@ export interface RichTextFieldProps {
   pendingImages?: boolean;
   /** Titolo della finestra grande: dice su cosa si sta scrivendo. */
   dialogTitle?: string;
+  /** Classi dell'area di scrittura (non della barra): per esempio un'altezza fissa. */
+  editorClassName?: string;
 }
 
 export function RichTextField({
@@ -77,6 +79,7 @@ export function RichTextField({
   taskId,
   pendingImages = false,
   dialogTitle,
+  editorClassName,
 }: RichTextFieldProps) {
   const { t } = useTranslation();
   const [editor, setEditor] = useState<Editor | null>(null);
@@ -182,6 +185,7 @@ export function RichTextField({
           onChange={field.setValue}
           placeholder={placeholder}
           onReady={setEditor}
+          className={editorClassName}
           // Schema completo (tabelle e figure) anche qui: la barra compatta non
           // offre quei comandi, ma senza i nodi nello schema il sync scarterebbe
           // ciò che la finestra grande ha scritto, e il primo tasto digitato lo

@@ -152,6 +152,8 @@ export function ProjectFormDialog({
           onChange={setDescription}
           dialogTitle={t("Descrizione del progetto")}
           placeholder={t("Di cosa si occupa questo progetto?")}
+          // Misurati attorno al campo: 820px, 894 sul telefono.
+          altezzaFissa={{ attorno: 52, attornoTelefono: 56.5 }}
         />
         <div className="flex flex-col gap-2">
           <Label>{t("Colore del bordo")}</Label>

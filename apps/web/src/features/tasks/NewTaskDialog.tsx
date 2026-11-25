@@ -318,6 +318,8 @@ export function NewTaskDialog({ open, onClose }: { open: boolean; onClose: () =>
           value={description}
           onChange={setDescription}
           dialogTitle={t("Descrizione del nuovo task")}
+          // Misurati attorno al campo: 696px, 876 sul telefono.
+          altezzaFissa={{ attorno: 44, attornoTelefono: 55.5 }}
         />
         {attachments.node}
         {error && <p className="text-sm text-destructive">{error}</p>}

@@ -71,6 +71,16 @@ export const pluginUiEntrySchema = z.object({
    * ogni richiesta (null = la domanda non si pone, il plugin non ha gruppo).
    */
   nelGruppo: z.boolean().nullable(),
+  /**
+   * **Solo per i responsabili di certe aree** (`ui.responsabiliDi` nel
+   * manifesto, dal 25/11/2026): la voce la vede chi è responsabile
+   * (`isManager`) di un gruppo che governa una di quelle aree
+   * (`Group.managedArea`: `DEV`, `SALES`…), e l'amministratore. Il gruppo si
+   * riconosce dall'area e non dal nome, che si cambia. Null = nessun filtro.
+   */
+  responsabiliDi: z.array(z.string()).nullable(),
+  /** Se chi ha chiesto l'elenco è fra quei responsabili; lo calcola il server (null = non si pone). */
+  responsabile: z.boolean().nullable(),
   /** Il proprietario delle tabelle `plugin_<nick>_…`; null = il plugin non ne ha. */
   nick: z.string().nullable(),
   /** Versione del codice del plugin, dal manifesto. */
